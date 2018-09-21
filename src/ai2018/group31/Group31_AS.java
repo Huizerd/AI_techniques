@@ -10,6 +10,8 @@ import java.util.*;
 public class Group31_AS extends AcceptanceStrategy {
     private double a;
     private double b;
+    private int window = 11;
+
 
     public Group31_AS() {
     }
@@ -45,37 +47,19 @@ public class Group31_AS extends AcceptanceStrategy {
 	@Override
 	public Actions determineAcceptability() {
     	List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
-		List<BidDetails> lookback = history.subList(Math.max(history.size() - 11, 0), history.size());
-		List<Double> utils = new ArrayList<Double>();
-		for (int i = 0; i < lookback.size(); i++) {
-		    utils.add(lookback.get(i).getMyUndiscountedUtil());
-			System.out.println(lookback.get(i).getMyUndiscountedUtil());
+    	int lookback = Math.max(history.size() - this.window, 0);
+    	double sum = 0;
+		for (int i = lookback; i < history.size(); i++) {
+		    sum += history.get(i).getMyUndiscountedUtil();
 		}
-		OptionalDouble average = utils
-				.stream()
-				.mapToDouble(a -> a)
-				.average();
-
-		OptionalDouble max = utils
-				.stream()
-				.mapToDouble(a -> a)
-				.max();
-
-		Collections.sort(utils);
-		double median = (double) utils.get(5);
-
-//		System.out.println(negotiationSession.getOpponentBidHistory().getLastBidDetails().getTime() + ": " + median + ", " + max + ", " + average);
-//		System.out.println(negotiationSession.getOpponentBidHistory().getLastBidDetails().getTime() + ": " + lo.size());
-//		System.out.println(median);
-
 
     	double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
-		double lastOpponentBidUtil = negotiationSession.getOpponentBidHistory().getLastBidDetails()
-				.getMyUndiscountedUtil();
+		double opponentWindowedAverage = sum/(double) window;
 
-        if (a * lastOpponentBidUtil + b >= nextMyBidUtil) {
-            return Actions.Accept;
-        }
+
+//        if (lastOpponentBidUtil >= nextMyBidUtil) {
+//            return Actions.Accept;
+//        }
         return Actions.Reject;
     }
 
