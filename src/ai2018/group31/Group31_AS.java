@@ -1,5 +1,6 @@
 package ai2018.group31;
 
+import genius.core.Bid;
 import genius.core.bidding.BidDetails;
 import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
@@ -46,20 +47,28 @@ public class Group31_AS extends AcceptanceStrategy {
 
 	@Override
 	public Actions determineAcceptability() {
-    	List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
-    	int lookback = Math.max(history.size() - this.window, 0);
-    	double sum = 0;
-		for (int i = lookback; i < history.size(); i++) {
-		    sum += history.get(i).getMyUndiscountedUtil();
-		}
+        double now = this.negotiationSession.getTime();
+        if (now > 0.5) {
+            List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
+            Bid oppLastBid = this.negotiationSession.getOpponentBidHistory().getLastBidDetails().getBid();
+            double discountedOppBid = this.negotiationSession.getUtilitySpace().getUtilityWithDiscount(oppLastBid, now);
 
-    	double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
-		double opponentWindowedAverage = sum/(double) window;
+            int lookback = Math.max(history.size() - this.window, 0);
+            double sum = 0;
+            for (int i = lookback; i < history.size(); i++) {
+                sum += history.get(i).getMyUndiscountedUtil();
+            }
+
+    //        double nextMyBidUtil1 = discountedBid.
+    //                offeringStrategy.getNextBid().getMyUndiscountedUtil();
+            double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
+            double opponentWindowedAverage = sum/(double) window;
 
 
-//        if (lastOpponentBidUtil >= nextMyBidUtil) {
-//            return Actions.Accept;
-//        }
+            if (discountedOppBid >= opponentWindowedAverage && discountedOppBid >= nextMyBidUtil) {
+                return Actions.Accept;
+            }
+        }
         return Actions.Reject;
     }
 
