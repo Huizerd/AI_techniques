@@ -9,66 +9,66 @@ import java.util.Map;
 import java.util.Set;
 
 public class Group31_AS extends AcceptanceStrategy {
-	private double a;
-	private double b;
+    private double a;
+    private double b;
 
     public Group31_AS() {
     }
 
-	public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
-		this.negotiationSession = negoSession;
-		this.offeringStrategy = strat;
-		this.a = alpha;
-		this.b = beta;
-	}
+    public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
+        this.negotiationSession = negoSession;
+        this.offeringStrategy = strat;
+        this.a = alpha;
+        this.b = beta;
+    }
 
-	@Override
-	public void init(NegotiationSession negoSession, OfferingStrategy strat, OpponentModel opponentModel,
+    @Override
+    public void init(NegotiationSession negoSession, OfferingStrategy strat, OpponentModel opponentModel,
                      Map<String, Double> parameters) {
-		this.negotiationSession = negoSession;
-		this.offeringStrategy = strat;
+        this.negotiationSession = negoSession;
+        this.offeringStrategy = strat;
 
-		if (parameters.get("a") != null || parameters.get("b") != null) {
-			a = parameters.get("a");
-			b = parameters.get("b");
-		} else {
-			a = 1;
-			b = 0;
-		}
-	}
+        if (parameters.get("a") != null || parameters.get("b") != null) {
+            a = parameters.get("a");
+            b = parameters.get("b");
+        } else {
+            a = 1;
+            b = 0;
+        }
+    }
 
-	@Override
-	public String printParameters() {
-		String str = "[a: " + a + " b: " + b + "]";
-		return str;
-	}
+    @Override
+    public String printParameters() {
+        String str = "[a: " + a + " b: " + b + "]";
+        return str;
+    }
 
-	@Override
-	public Actions determineAcceptability() {
-		double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
-		double lastOpponentBidUtil = negotiationSession.getOpponentBidHistory().getLastBidDetails()
-				.getMyUndiscountedUtil();
+    @Override
+    public Actions determineAcceptability() {
+        double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
+        double lastOpponentBidUtil = negotiationSession.getOpponentBidHistory().getLastBidDetails()
+                .getMyUndiscountedUtil();
 
-		if (a * lastOpponentBidUtil + b >= nextMyBidUtil) {
-			return Actions.Accept;
-		}
-		return Actions.Reject;
-	}
+        if (a * lastOpponentBidUtil + b >= nextMyBidUtil) {
+            return Actions.Accept;
+        }
+        return Actions.Reject;
+    }
 
-	@Override
-	public Set<BOAparameter> getParameterSpec() {
+    @Override
+    public Set<BOAparameter> getParameterSpec() {
 
-		Set<BOAparameter> set = new HashSet<BOAparameter>();
-		set.add(new BOAparameter("a", 1.0,
-				"Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
-		set.add(new BOAparameter("b", 0.0,
-				"Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
+        Set<BOAparameter> set = new HashSet<BOAparameter>();
+        set.add(new BOAparameter("a", 1.0,
+                "Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
+        set.add(new BOAparameter("b", 0.0,
+                "Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
 
-		return set;
-	}
+        return set;
+    }
 
-	@Override
-	public String getName() {
+    @Override
+    public String getName() {
         return "2018 - Group31 AS";
-	}
+    }
 }
