@@ -1,82 +1,74 @@
 package ai2018.group31;
 
-// Acceptance Strategy
-// decides whether the opponent’s bid is acceptable
+import genius.core.boaframework.AcceptanceStrategy;
+import genius.core.boaframework.Actions;
+import genius.core.boaframework.BOAparameter;
+import genius.core.boaframework.NegotiationSession;
+import genius.core.boaframework.OfferingStrategy;
+import genius.core.boaframework.OpponentModel;
 
-public class Group31_AS {
-	
-	public void init(NegotiationSession negotiationSession,
-            Group31_BS offeringStrategy,
-            Group31_OM opponentModel,
-            java.util.Map<java.lang.String,java.lang.Double> parameters) 
-            throws java.lang.Exception {
-		
-		//	negotiationSession - state of the negotiation.
-		//	offeringStrategy - of the agent.
-		//	parameters - of the acceptance strategy		
-            		
-		//TODO 
-		
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class Group31_AS extends AcceptanceStrategy {
+	private double a;
+	private double b;
+
+	public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
+		this.negotiationSession = negoSession;
+		this.offeringStrategy = strat;
+		this.a = alpha;
+		this.b = beta;
 	}
-	
-	public java.lang.String printParameters(){
-		
-		//	Returns: string representation of the parameters supplied to the model.
-		
-		//TODO
-		
+
+	@Override
+	public void init(NegotiationSession negoSession, OfferingStrategy strat, OpponentModel opponentModel,
+					 Map<String, Double> parameters) throws Exception {
+		this.negotiationSession = negoSession;
+		this.offeringStrategy = strat;
+
+		if (parameters.get("a") != null || parameters.get("b") != null) {
+			a = parameters.get("a");
+			b = parameters.get("b");
+		} else {
+			a = 1;
+			b = 0;
+		}
+	}
+
+	@Override
+	public String printParameters() {
+		String str = "[a: " + a + " b: " + b + "]";
+		return str;
+	}
+
+	@Override
+	public Actions determineAcceptability() {
+		double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
+		double lastOpponentBidUtil = negotiationSession.getOpponentBidHistory().getLastBidDetails()
+				.getMyUndiscountedUtil();
+
+		if (a * lastOpponentBidUtil + b >= nextMyBidUtil) {
+			return Actions.Accept;
+		}
+		return Actions.Reject;
+	}
+
+	@Override
+	public Set<BOAparameter> getParameterSpec() {
+
+		Set<BOAparameter> set = new HashSet<BOAparameter>();
+		set.add(new BOAparameter("a", 1.0,
+				"Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
+		set.add(new BOAparameter("b", 0.0,
+				"Accept when the opponent's utility * a + b is greater than the utility of our current bid"));
+
+		return set;
+	}
+
+	@Override
+	public String getName() {
 		return null;
-	}
-	
-//	public void setOpponentUtilitySpace(BilateralAtomicNegotiationSession fNegotiation) {
-//		//	Method which may be overwritten to get access to the opponent's utilityspace in an experimental setup.
-//		//	Parameters:
-//		//	fNegotiation - reference to negotiation setting.
-	
-		//TODO 
-
-//	}
-	
-	public /*abstract*/ Actions determineAcceptability() {
-		
-		//	Determines to either to either accept or reject the opponent's bid or even quit the negotiation.
-		//	Returns: one of three possible actions: Actions.Accept, Actions.Reject, Actions.Break.
-		
-		//TODO 
-		
-		return null;
-	}
-	
-	public final void storeData(java.io.Serializable object) {
-		
-		//	Description copied from class: BOA
-		//	Method used to store data that should be accessible in the next negotiation session on the same scenario. 
-		//  This method can be called during the negotiation, but it makes more sense to call it in the endSession method.
-		//	Specified by: storeData in class BOA
-		//	Parameters: object - to be saved by this component.
-
-		//TODO 
-	}	
-
-	public final java.io.Serializable loadData() {
-
-		//	Description copied from class: BOA
-		//	Method used to load the saved object, possibly created in a previous negotiation session. The method returns null when such an object does not exist yet.
-		//	Specified by: loadData in class BOA
-		//	Returns: saved object or null when not available.
-
-		//TODO 
-
-		return null;
-	}
-	
-	public boolean isMAC() {
-		
-		//	Method which states if the current acceptance strategy is the Multi-Acceptance Strategy. This method should always return false, except for the MAC.
-		//	Returns: if AC is MAC.
-		
-		//TODO 
-
-		return false;
 	}
 }
