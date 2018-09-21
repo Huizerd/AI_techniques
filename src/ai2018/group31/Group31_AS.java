@@ -1,12 +1,11 @@
 package ai2018.group31;
 
+import genius.core.bidding.BidDetails;
 import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
 import genius.core.boaframework.NegotiationSession;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Group31_AS extends AcceptanceStrategy {
 	private double a;
@@ -45,7 +44,32 @@ public class Group31_AS extends AcceptanceStrategy {
 
 	@Override
 	public Actions determineAcceptability() {
-		double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
+    	List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
+		List<BidDetails> lookback = history.subList(Math.max(history.size() - 11, 0), history.size());
+		List<Double> utils = new ArrayList<Double>();
+		for (int i = 0; i < lookback.size(); i++) {
+		    utils.add(lookback.get(i).getMyUndiscountedUtil());
+			System.out.println(lookback.get(i).getMyUndiscountedUtil());
+		}
+		OptionalDouble average = utils
+				.stream()
+				.mapToDouble(a -> a)
+				.average();
+
+		OptionalDouble max = utils
+				.stream()
+				.mapToDouble(a -> a)
+				.max();
+
+		Collections.sort(utils);
+		double median = (double) utils.get(5);
+
+//		System.out.println(negotiationSession.getOpponentBidHistory().getLastBidDetails().getTime() + ": " + median + ", " + max + ", " + average);
+//		System.out.println(negotiationSession.getOpponentBidHistory().getLastBidDetails().getTime() + ": " + lo.size());
+//		System.out.println(median);
+
+
+    	double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
 		double lastOpponentBidUtil = negotiationSession.getOpponentBidHistory().getLastBidDetails()
 				.getMyUndiscountedUtil();
 
