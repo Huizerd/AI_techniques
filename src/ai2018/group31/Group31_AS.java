@@ -1,11 +1,8 @@
 package ai2018.group31;
 
-import genius.core.boaframework.AcceptanceStrategy;
+import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
-import genius.core.boaframework.BOAparameter;
 import genius.core.boaframework.NegotiationSession;
-import genius.core.boaframework.OfferingStrategy;
-import genius.core.boaframework.OpponentModel;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -14,6 +11,9 @@ import java.util.Set;
 public class Group31_AS extends AcceptanceStrategy {
 	private double a;
 	private double b;
+
+    public Group31_AS() {
+    }
 
 	public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
 		this.negotiationSession = negoSession;
@@ -24,7 +24,7 @@ public class Group31_AS extends AcceptanceStrategy {
 
 	@Override
 	public void init(NegotiationSession negoSession, OfferingStrategy strat, OpponentModel opponentModel,
-					 Map<String, Double> parameters) throws Exception {
+                     Map<String, Double> parameters) {
 		this.negotiationSession = negoSession;
 		this.offeringStrategy = strat;
 
@@ -69,6 +69,6 @@ public class Group31_AS extends AcceptanceStrategy {
 
 	@Override
 	public String getName() {
-		return null;
+        return "2018 - Group31 AS";
 	}
 }
