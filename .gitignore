@@ -26,7 +26,11 @@ hs_err_pid*
 .idea/
 AI_techniques.iml
 
-# Random Genius files
-lib/*.xml
-lib/etc/
-lib/log/
+# Genius logs, templates and standard parties/domains
+# We only change BOA-related files, and files not present are added automatically by genius
+log/
+etc/
+domainrepository.xml
+multipartyprotocolrepository.xml
+partyrepository.xml
+protocolrepository.xml
