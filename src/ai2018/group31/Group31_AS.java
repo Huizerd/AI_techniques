@@ -48,7 +48,8 @@ public class Group31_AS extends AcceptanceStrategy {
 	@Override
 	public Actions determineAcceptability() {
         double now = this.negotiationSession.getTime();
-        if (now > 0.5) {
+        int current_k = negotiationSession.getOpponentBidHistory().getHistory().size();
+        if (current_k > this.window) {
             List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
             Bid oppLastBid = this.negotiationSession.getOpponentBidHistory().getLastBidDetails().getBid();
             double discountedOppBid = this.negotiationSession.getUtilitySpace().getUtilityWithDiscount(oppLastBid, now);
@@ -59,8 +60,6 @@ public class Group31_AS extends AcceptanceStrategy {
                 sum += history.get(i).getMyUndiscountedUtil();
             }
 
-    //        double nextMyBidUtil1 = discountedBid.
-    //                offeringStrategy.getNextBid().getMyUndiscountedUtil();
             double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
             double opponentWindowedAverage = sum/(double) window;
 
