@@ -24,4 +24,9 @@ hs_err_pid*
 
 # IDEA
 .idea/
-*.iml
+AI_techniques.iml
+
+# Random Genius files
+lib/*.xml
+lib/etc/
+lib/log/
