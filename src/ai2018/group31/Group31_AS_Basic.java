@@ -1,23 +1,23 @@
 package ai2018.group31;
 
 import genius.core.Bid;
-import genius.core.bidding.BidDetails;
 import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
 import genius.core.boaframework.NegotiationSession;
-
+import genius.core.boaframework.AcceptanceStrategy;
 import java.util.*;
 
-public class Group31_AS extends AcceptanceStrategy {
+
+public class Group31_AS_Basic extends AcceptanceStrategy {
+
     private double a;
     private double b;
-    private int window = 11;
 
+    public Group31_AS_Basic(){
 
-    public Group31_AS() {
     }
 
-    public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
+    public Group31_AS_Basic(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
         this.negotiationSession = negoSession;
         this.offeringStrategy = strat;
         this.a = alpha;
@@ -45,30 +45,18 @@ public class Group31_AS extends AcceptanceStrategy {
         return str;
     }
 
-	@Override
-	public Actions determineAcceptability() {
-        double now = this.negotiationSession.getTime();
-        int current_k = negotiationSession.getOpponentBidHistory().getHistory().size();
-        if (current_k > this.window) {
-            List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
-            Bid oppLastBid = this.negotiationSession.getOpponentBidHistory().getLastBidDetails().getBid();
-            double discountedOppBid = this.negotiationSession.getUtilitySpace().getUtilityWithDiscount(oppLastBid, now);
+    @Override
+    public Actions determineAcceptability() {
+        Bid opppLastBid       = this.negotiationSession.getOpponentBidHistory().getLastBidDetails().getBid();
+        double now            = this.negotiationSession.getTime();
+        double discountedBid = this.negotiationSession.getUtilitySpace().getUtilityWithDiscount(opppLastBid, now);
+        double nextMyBidUtil  = offeringStrategy.getNextBid().getMyUndiscountedUtil();
 
-            int lookback = Math.max(history.size() - this.window, 0);
-            double sum = 0;
-            for (int i = lookback; i < history.size(); i++) {
-                sum += history.get(i).getMyUndiscountedUtil();
-            }
-
-            double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
-            double opponentWindowedAverage = sum/(double) window;
-
-
-            if (discountedOppBid >= opponentWindowedAverage && discountedOppBid >= nextMyBidUtil) {
-                return Actions.Accept;
-            }
+        if (discountedBid >= nextMyBidUtil){
+            return Actions.Accept;
+        }else{
+            return Actions.Reject;
         }
-        return Actions.Reject;
     }
 
     @Override
@@ -85,6 +73,6 @@ public class Group31_AS extends AcceptanceStrategy {
 
     @Override
     public String getName() {
-        return "2018 - Group31 AS";
+        return "2018 - Group31 AS Basic";
     }
 }
