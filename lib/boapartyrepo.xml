@@ -17,4 +17,19 @@
             <item classpath="negotiator.boaframework.omstrategy.NTFTstrategy"/>
         </omStrategy>
     </boaparties>
+    <boaparties partyName="BSParty">
+        <properties/>
+        <biddingStrategy>
+            <item classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_BS.class"/>
+        </biddingStrategy>
+        <acceptanceStrategy>
+            <item classpath="negotiator.boaframework.acceptanceconditions.anac2010.AC_AgentK"/>
+        </acceptanceStrategy>
+        <opponentModel>
+            <item classpath="negotiator.boaframework.opponentmodel.AgentLGModel"/>
+        </opponentModel>
+        <omStrategy>
+            <item classpath="negotiator.boaframework.omstrategy.NTFTstrategy"/>
+        </omStrategy>
+    </boaparties>
 </boaPartiesList>
