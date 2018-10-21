@@ -87,8 +87,10 @@
 		<opponentmodel description="Default Model" classpath="negotiator.boaframework.opponentmodel.DefaultModel"/>
 		<opponentmodel description="Nash Frequency Model" classpath="negotiator.boaframework.opponentmodel.NashFrequencyModel"/>
 		<opponentmodel description="Worst Model" classpath="negotiator.boaframework.opponentmodel.WorstModel"/>
+		<opponentmodel description="Group31 OM" classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OM.class"/>
 		<opponentmodel description="IAMhaggler Bayesian Model" classpath="negotiator.boaframework.opponentmodel.IAMhagglerBayesianModel"/>
 		<opponentmodel description="Bayesian Model" classpath="negotiator.boaframework.opponentmodel.BayesianModel"/>
+		<opponentmodel description="2018 - Group 31" classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OM.class"/>
 		<opponentmodel description="AgentX Frequency Model" classpath="negotiator.boaframework.opponentmodel.AgentXFrequencyModel"/>
 		<opponentmodel description="TheFawkes_OM" classpath="negotiator.boaframework.opponentmodel.TheFawkes_OM"/>
 		<opponentmodel description="Smith Frequency Model" classpath="negotiator.boaframework.opponentmodel.SmithFrequencyModel"/>

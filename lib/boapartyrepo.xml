@@ -32,4 +32,38 @@
             <item classpath="negotiator.boaframework.omstrategy.NTFTstrategy"/>
         </omStrategy>
     </boaparties>
+    <boaparties partyName="FSEGAwHH_OMv2">
+        <properties/>
+        <biddingStrategy>
+            <item classpath="negotiator.boaframework.offeringstrategy.anac2010.AgentFSEGA_Offering"/>
+        </biddingStrategy>
+        <acceptanceStrategy>
+            <item classpath="negotiator.boaframework.acceptanceconditions.anac2010.AC_AgentFSEGA"/>
+        </acceptanceStrategy>
+        <opponentModel>
+            <parameters name="l" value="0.2"/>
+            <item classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OM.class"/>
+        </opponentModel>
+        <omStrategy>
+            <parameters name="t" value="1.1"/>
+            <item classpath="negotiator.boaframework.omstrategy.BestBid"/>
+        </omStrategy>
+    </boaparties>
+    <boaparties partyName="FSEGAwHH_OMv1">
+        <properties/>
+        <biddingStrategy>
+            <item classpath="negotiator.boaframework.offeringstrategy.anac2010.AgentFSEGA_Offering"/>
+        </biddingStrategy>
+        <acceptanceStrategy>
+            <item classpath="negotiator.boaframework.acceptanceconditions.anac2010.AC_AgentFSEGA"/>
+        </acceptanceStrategy>
+        <opponentModel>
+            <parameters name="l" value="0.2"/>
+            <item classpath="negotiator.boaframework.opponentmodel.HardHeadedFrequencyModel"/>
+        </opponentModel>
+        <omStrategy>
+            <parameters name="t" value="1.1"/>
+            <item classpath="negotiator.boaframework.omstrategy.BestBid"/>
+        </omStrategy>
+    </boaparties>
 </boaPartiesList>
