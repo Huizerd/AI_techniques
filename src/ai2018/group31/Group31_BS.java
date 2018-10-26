@@ -100,5 +100,4 @@ public class Group31_BS extends OfferingStrategy {
     public String getName() {
         return "2018 - Group31 - Bidding";
     }
-
 }
