@@ -49,6 +49,7 @@ public class Group31_OM extends OpponentModel {
     private int amountOfIssues;
     private double goldenValue;
     private int windowSize;
+    private double gamma;
 
     public Group31_OM() {
     }
@@ -61,6 +62,7 @@ public class Group31_OM extends OpponentModel {
             this.learnCoef = 0.2D;
         }
 
+        this.gamma = 0.5;
         this.learnValueAddition = 1;
         this.opponentUtilitySpace = (AdditiveUtilitySpace) var1.getUtilitySpace().copy();
         this.amountOfIssues = this.opponentUtilitySpace.getDomain().getIssues().size();
@@ -71,74 +73,77 @@ public class Group31_OM extends OpponentModel {
         this.windowSize = 5;
     }
 
-    public void updateModel(Bid var1, double var2) {
-        int h = this.negotiationSession.getOpponentBidHistory().size();
-        if (h < 2) return;
+    @Override
+    public void updateModel(Bid opponentBid, double time) {
+        if (negotiationSession.getOpponentBidHistory().size() < 2) {
+            return;
+        }
+        int numberOfUnchanged = 0;
+        BidDetails oppBid = negotiationSession.getOpponentBidHistory()
+                .getHistory()
+                .get(negotiationSession.getOpponentBidHistory().size() - 1);
+        BidDetails prevOppBid = negotiationSession.getOpponentBidHistory()
+                .getHistory()
+                .get(negotiationSession.getOpponentBidHistory().size() - 2);
+        HashMap<Integer, Integer> lastDiffSet = determineDifference(prevOppBid, oppBid);
 
-        int commonOccurences = 0;
-        int wz = h < this.windowSize ? h : this.windowSize;
-
-        BidDetails currBid = this.negotiationSession.getOpponentBidHistory().getHistory().get(this.negotiationSession.getOpponentBidHistory().size() - 1);
-        Map<Integer, Integer> differenceLookup = new HashMap();
-
-        for (int i = 2; i <= wz; i++) {
-            BidDetails prevBid = this.negotiationSession.getOpponentBidHistory().getHistory().get(this.negotiationSession.getOpponentBidHistory().size() - i);
-            differenceLookup = determineDifference(prevBid, currBid, new HashMap<>(differenceLookup));
+        // count the number of changes in value
+        for (Integer i : lastDiffSet.keySet()) {
+            if (lastDiffSet.get(i) == 0)
+                numberOfUnchanged++;
         }
 
-        Iterator iter = differenceLookup.keySet().iterator();
+        // The total sum of weights before normalization.
+        double totalSum = 1D + goldenValue * numberOfUnchanged;
+        // The maximum possible weight
+        double maximumWeight = 1D - (amountOfIssues) * goldenValue / totalSum;
 
-        while (iter.hasNext()) {
-            Integer issueNo = (Integer) iter.next();
-            if (differenceLookup.get(issueNo) == 0) {
-                ++commonOccurences;
-            }
-        }
+        // re-weighing issues while making sure that the sum remains 1
+        for (Integer i : lastDiffSet.keySet()) {
+            Objective issue = opponentUtilitySpace.getDomain()
+                    .getObjectivesRoot().getObjective(i);
+            double weight = opponentUtilitySpace.getWeight(i);
+            double newWeight;
 
-        double var20 = 1.0D + this.goldenValue * (double) commonOccurences;
-        double var10 = 1.0D - (double) this.amountOfIssues * this.goldenValue / var20;
-
-        Iterator iter2;
-        Objective objective;
-        double var17;
-        for (iter2 = differenceLookup.keySet().iterator(); iter2.hasNext(); this.opponentUtilitySpace.setWeight(objective, var17)) {
-            Integer currentDiff = (Integer) iter2.next();
-            objective = this.opponentUtilitySpace.getDomain().getObjectivesRoot().getObjective(currentDiff);
-            double var15 = this.opponentUtilitySpace.getWeight(currentDiff);
-            if (differenceLookup.get(currentDiff) == 0 && var15 < var10) {
-                var17 = (var15 + this.goldenValue) / var20;
+            if (lastDiffSet.get(i) == 0 && weight < maximumWeight) {
+                newWeight = (weight + goldenValue) / totalSum;
             } else {
-                var17 = var15 / var20;
+                newWeight = weight / totalSum;
             }
+            opponentUtilitySpace.setWeight(issue, newWeight);
         }
 
+        // Then for each issue value that has been offered last time, a constant
+        // value is added to its corresponding ValueDiscrete.
         try {
-            iter2 = this.opponentUtilitySpace.getEvaluators().iterator();
-
-            while (iter2.hasNext()) {
-                Map.Entry var21 = (Map.Entry) iter2.next();
-                EvaluatorDiscrete var22 = (EvaluatorDiscrete) var21.getValue();
-                IssueDiscrete var23 = (IssueDiscrete) var21.getKey();
-                ValueDiscrete var16 = (ValueDiscrete) currBid.getBid().getValue(var23.getNumber());
-                Integer var24 = var22.getEvaluationNotNormalized(var16);
-                var22.setEvaluation(var16, this.learnValueAddition + var24);
+            for (Entry<Objective, Evaluator> e : opponentUtilitySpace
+                    .getEvaluators()) {
+                EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+                IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+                /*
+                 * add constant learnValueAddition to the current preference of
+                 * the value to make it more important
+                 */
+                ValueDiscrete issuevalue = (ValueDiscrete) oppBid.getBid()
+                        .getValue(issue.getNumber());
+                Integer eval = value.getEvaluationNotNormalized(issuevalue);
+                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+                value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, this.gamma)/normalizer);
             }
-        } catch (Exception var19) {
-            var19.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-
     }
 
-    public double getBidEvaluation(Bid var1) {
-        double var2 = 0.0D;
-
+    @Override
+    public double getBidEvaluation(Bid bid) {
+        double result = 0;
         try {
-            var2 = this.opponentUtilitySpace.getUtility(var1);
-        } catch (Exception var5) {
-            var5.printStackTrace();
+            result = opponentUtilitySpace.getUtility(bid);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        return var2;
+        return result;
     }
 
     public String getName() {
@@ -174,21 +179,31 @@ public class Group31_OM extends OpponentModel {
 
     }
 
-    private HashMap<Integer, Integer> determineDifference(BidDetails prevBid, BidDetails currBid, Map<Integer, Integer> diffLookup) {
-        try {
-            Iterator iter = this.opponentUtilitySpace.getDomain().getIssues().iterator();
+    /**
+     * Determines the difference between bids. For each issue, it is determined
+     * if the value changed. If this is the case, a 1 is stored in a hashmap for
+     * that issue, else a 0.
+     *
+     * @param first
+     *            bid of the opponent
+     * @param second
+     *            bid
+     * @return
+     */
+    private HashMap<Integer, Integer> determineDifference(BidDetails first,
+                                                          BidDetails second) {
 
-            while (iter.hasNext()) {
-                Issue issue = (Issue) iter.next();
-                Value prevBidVal = prevBid.getBid().getValue(issue.getNumber());
-                Value currBidVal = currBid.getBid().getValue(issue.getNumber());
-                diffLookup.put(issue.getNumber(), (diffLookup.get(issue.getNumber()) == 0 ||
-                        prevBidVal.equals(currBidVal)) ? 0 : 1);
+        HashMap<Integer, Integer> diff = new HashMap<Integer, Integer>();
+        try {
+            for (Issue i : opponentUtilitySpace.getDomain().getIssues()) {
+                Value value1 = first.getBid().getValue(i.getNumber());
+                Value value2 = second.getBid().getValue(i.getNumber());
+                diff.put(i.getNumber(), (value1.equals(value2)) ? 0 : 1);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
-        return (HashMap<Integer, Integer>) diffLookup;
+        return diff;
     }
 }
