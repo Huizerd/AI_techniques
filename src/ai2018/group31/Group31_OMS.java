@@ -121,6 +121,6 @@ public class Group31_OMS extends OMStrategy {
 
     @Override
     public String getName() {
-        return "BestBid";
+        return "GROUP31_OMS";
     }
 }
