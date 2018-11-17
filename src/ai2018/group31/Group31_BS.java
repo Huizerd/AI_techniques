@@ -29,7 +29,7 @@ public class Group31_BS extends OfferingStrategy {
     }
 
     @Override
-    public void init(NegotiationSession var1, OpponentModel var2, OMStrategy var3, Map<String, Double> var4) throws Exception {
+    public void init(NegotiationSession var1, OpponentModel var2, OMStrategy var3, Map<String, Double> var4) {
         this.timeBuckets = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
         this.utilMeans = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
         this.random = new Random();
@@ -98,6 +98,6 @@ public class Group31_BS extends OfferingStrategy {
     }
 
     public String getName() {
-        return "2018 - Group31 - Bidding";
+        return "Group31_BS";
     }
 }

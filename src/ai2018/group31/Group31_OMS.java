@@ -5,19 +5,13 @@
 package ai2018.group31;
 
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
-
 import genius.core.bidding.BidDetails;
 import genius.core.boaframework.BOAparameter;
 import genius.core.boaframework.NegotiationSession;
 import genius.core.boaframework.OMStrategy;
 import genius.core.boaframework.OpponentModel;
+
+import java.util.*;
 
 /**
  * This class uses an opponent model to determine the next bid for the opponent,
@@ -121,6 +115,6 @@ public class Group31_OMS extends OMStrategy {
 
     @Override
     public String getName() {
-        return "GROUP31_OMS";
+        return "Group31_OMS";
     }
 }

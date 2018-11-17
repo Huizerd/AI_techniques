@@ -6,7 +6,10 @@ import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
 import genius.core.boaframework.NegotiationSession;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Group31_AS extends AcceptanceStrategy {
     private double a;
@@ -85,6 +88,6 @@ public class Group31_AS extends AcceptanceStrategy {
 
     @Override
     public String getName() {
-        return "2018 - Group31 AS";
+        return "Group31_AS";
     }
 }

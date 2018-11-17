@@ -4,8 +4,10 @@ import genius.core.Bid;
 import genius.core.boaframework.*;
 import genius.core.boaframework.Actions;
 import genius.core.boaframework.NegotiationSession;
-import genius.core.boaframework.AcceptanceStrategy;
-import java.util.*;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 public class Group31_AS_Basic extends AcceptanceStrategy {
@@ -73,6 +75,6 @@ public class Group31_AS_Basic extends AcceptanceStrategy {
 
     @Override
     public String getName() {
-        return "2018 - Group31 AS Basic";
+        return "Group31_AS_Basic";
     }
 }

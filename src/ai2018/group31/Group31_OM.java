@@ -14,32 +14,12 @@ import genius.core.utility.Evaluator;
 import genius.core.utility.EvaluatorDiscrete;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 //
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by Fernflower decompiler)
 //
-
-import genius.core.Bid;
-import genius.core.bidding.BidDetails;
-import genius.core.boaframework.BOAparameter;
-import genius.core.boaframework.NegotiationSession;
-import genius.core.boaframework.OpponentModel;
-import genius.core.issue.Issue;
-import genius.core.issue.IssueDiscrete;
-import genius.core.issue.Objective;
-import genius.core.issue.Value;
-import genius.core.issue.ValueDiscrete;
-import genius.core.utility.AdditiveUtilitySpace;
-import genius.core.utility.Evaluator;
-import genius.core.utility.EvaluatorDiscrete;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 
 
 public class Group31_OM extends OpponentModel {
@@ -147,7 +127,7 @@ public class Group31_OM extends OpponentModel {
     }
 
     public String getName() {
-        return "2018 - Group 31 Model";
+        return "Group31_OM";
     }
 
     public Set<BOAparameter> getParameterSpec() {
