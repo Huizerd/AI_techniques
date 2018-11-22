@@ -211,8 +211,10 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
                      */
                     ValueDiscrete issuevalue = (ValueDiscrete) oppBid.getValue(issue.getNumber());
                     Integer eval = value.getEvaluationNotNormalized(issuevalue);
-                    Double normalizer = Math.pow(value.getEvalMax() + 1, gamma);
-                    value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, gamma) / normalizer);
+//                    Double normalizer = Math.pow(value.getEvalMax() + 1, gamma);
+//                    value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, gamma) / normalizer);
+                    Double normalizer = value.getEvalMax() + 1;
+                    value.setEvaluationDouble(issuevalue, learnValueAddition + eval/ normalizer);
 
                 }
             } catch (Exception ex) {
