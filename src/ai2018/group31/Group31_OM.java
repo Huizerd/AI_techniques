@@ -107,23 +107,58 @@ public class Group31_OM extends OpponentModel {
                 ValueDiscrete issuevalue = (ValueDiscrete) oppBid.getBid()
                         .getValue(issue.getNumber());
                 Integer eval = value.getEvaluationNotNormalized(issuevalue);
-                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-                value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, this.gamma)/normalizer);
+                value.setEvaluationDouble(issuevalue, learnValueAddition + eval);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+//        for (Entry<Objective, Evaluator> e : opponentUtilitySpace
+//                .getEvaluators()) {
+//            EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+//            IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+//            System.out.println(issue.getDescription() + ":  " + value);
+//        }
     }
 
     @Override
     public double getBidEvaluation(Bid bid) {
         double result = 0;
-        try {
-            result = opponentUtilitySpace.getUtility(bid);
-        } catch (Exception e) {
-            e.printStackTrace();
+        int count = 0;
+        for (Entry<Objective, Evaluator> e : opponentUtilitySpace.getEvaluators()) {
+            Double weight = opponentUtilitySpace.getWeight(count);
+            try {
+                EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+                IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+                ValueDiscrete issuevalue = (ValueDiscrete) bid.getValue(issue.getNumber());
+                Double eval = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
+                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+                eval = Math.pow(learnValueAddition + eval, this.gamma)/normalizer;
+                result += weight*eval;
+                System.out.println(weight + ": " + eval);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+            count++;
         }
+//        int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
+//            for (int i = 0; i < nrIssues; i++) {
+//                try {
+//                    ValueDiscrete valueOfIssue = (ValueDiscrete) bid.getValue(i);
+//                    Integer eval               = value.getEvaluationNotNormalized(valueOfIssue);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            result += opponentUtilitySpace.getUtility(bid);
+//        }
+        System.out.println("Utility: " + result);
+        System.out.println("=============================");
         return result;
+
+            //            double eval = value.getDoubleValue(issuevalue);
+//            System.out.println("Int eval : " + eval + " || issuevalue.getValue() : " + value.getDoubleValue(issuevalue));
+//            Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+//            value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, this.gamma)/normalizer);
     }
 
     public String getName() {
