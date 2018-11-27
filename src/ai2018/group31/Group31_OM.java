@@ -134,24 +134,9 @@ public class Group31_OM extends OpponentModel {
             }
             count++;
         }
-//        int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
-//            for (int i = 0; i < nrIssues; i++) {
-//                try {
-//                    ValueDiscrete valueOfIssue = (ValueDiscrete) bid.getValue(i);
-//                    Integer eval               = value.getEvaluationNotNormalized(valueOfIssue);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            result += opponentUtilitySpace.getUtility(bid);
-//        }
-        System.out.println("Utility: " + result);
-        System.out.println("=============================");
+//        System.out.println("Utility: " + result);
+//        System.out.println("=============================");
         return result;
-
-        //            double eval = value.getDoubleValue(issuevalue);
-//            System.out.println("Int eval : " + eval + " || issuevalue.getValue() : " + value.getDoubleValue(issuevalue));
-//            Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-//            value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, this.gamma)/normalizer);
     }
 
     public String getName() {
