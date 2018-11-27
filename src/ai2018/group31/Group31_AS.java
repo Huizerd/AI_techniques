@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class Group31_AS extends AcceptanceStrategy {
-    private double a;
-    private double b;
     private int window = 11;
 
 
@@ -22,7 +20,7 @@ public class Group31_AS extends AcceptanceStrategy {
 
     public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat) {
         this.negotiationSession = negoSession;
-        this.offeringStrategy   = strat;
+        this.offeringStrategy = strat;
     }
 
     @Override
@@ -33,13 +31,7 @@ public class Group31_AS extends AcceptanceStrategy {
     }
 
     @Override
-    public String printParameters() {
-        String str = "[a: " + a + " b: " + b + "]";
-        return str;
-    }
-
-	@Override
-	public Actions determineAcceptability() {
+    public Actions determineAcceptability() {
         double now = this.negotiationSession.getTime();
         int current_k = negotiationSession.getOpponentBidHistory().getHistory().size();
         if (current_k > this.window) {
@@ -54,8 +46,7 @@ public class Group31_AS extends AcceptanceStrategy {
             }
 
             double nextMyBidUtil = offeringStrategy.getNextBid().getMyUndiscountedUtil();
-            double opponentWindowedAverage = sum/(double) window;
-
+            double opponentWindowedAverage = sum / (double) window;
 
             if (discountedOppBid >= opponentWindowedAverage && discountedOppBid >= nextMyBidUtil) {
                 return Actions.Accept;

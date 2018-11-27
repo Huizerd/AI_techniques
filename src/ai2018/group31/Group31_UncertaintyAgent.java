@@ -7,18 +7,13 @@ import java.util.Map;
 
 import java.util.Map.Entry;
 
-import agents.anac.y2013.MetaAgent.portfolio.thenegotiatorreloaded.BidDetails;
 import genius.core.Bid;
 import genius.core.Domain;
 import genius.core.actions.Accept;
 import genius.core.actions.Action;
 import genius.core.actions.Offer;
-import genius.core.boaframework.AcceptanceStrategy;
-import genius.core.boaframework.NegotiationSession;
 import genius.core.issue.*;
 import genius.core.parties.AbstractNegotiationParty;
-import genius.core.uncertainty.AdditiveUtilitySpaceFactory;
-import genius.core.uncertainty.ExperimentalUserModel;
 import genius.core.utility.AbstractUtilitySpace;
 import genius.core.utility.AdditiveUtilitySpace;
 import genius.core.utility.Evaluator;
@@ -31,8 +26,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 
     @Override
     public Action chooseAction(List<Class<? extends Action>> possibleActions) {
-
-
         // Sample code that accepts offers that appear in the top 10% of offers
         // in the user model
         if (getLastReceivedAction() instanceof Offer) {
@@ -51,12 +44,7 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 
         // Otherwise, return a random offer
         Bid rBid = generateRandomBid();
-        System.out.println(" --> " + this.ourUtilitySpace.getUtility(rBid));
         return new Offer(getPartyId(), rBid);
-    }
-
-    private void log(String s) {
-        System.out.println(s);
     }
 
     /**
@@ -91,42 +79,37 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
     public void updateUtilitySpace() {
         List<Bid> bidOrder = userModel.getBidRanking().getBidOrder();
         double goldenValue = 0.04;
-        int amountOfIssues = this.ourUtilitySpace.getDomain().getIssues().size();
         int learnValueAddition = 1;
 
         // Our previous OMS Model
-
-        int randomBidIdx = 3;
-
         for (int i = 1; i < bidOrder.size() - 1; i++) {
             Bid oppBid = bidOrder.get(i);
             Bid prevOppBid = bidOrder.get(i - 1);
             HashMap<Integer, Integer> lastDiffSet = determineDifference(prevOppBid, oppBid);
 
-            int numberOfUnchanged = 0;
-            // count the number of changes in value
-            for (Integer j : lastDiffSet.keySet()) {
-                if (lastDiffSet.get(j) == 0)
-                    numberOfUnchanged++;
-            }
-
-            // The total sum of weights before normalization.
-            double totalSum = 1D + goldenValue * numberOfUnchanged;
-            // The maximum possible weight
-            double maximumWeight = 1D - (amountOfIssues) * goldenValue / totalSum;
-
+            // Increment the weights of issues that did not change their value since the last bid.
+            double totalWeight = 0;
             for (Integer j : lastDiffSet.keySet()) {
                 Objective issue = this.ourUtilitySpace.getDomain()
                         .getObjectivesRoot().getObjective(j);
                 double weight = this.ourUtilitySpace.getWeight(j);
                 double newWeight;
 
-                if (lastDiffSet.get(j) == 0 && weight < maximumWeight) {
-                    newWeight = (weight + goldenValue) / totalSum;
+                if (lastDiffSet.get(j) == 0) {
+                    newWeight = (weight + goldenValue);
                 } else {
-                    newWeight = weight / totalSum;
+                    newWeight = weight;
                 }
+                totalWeight += newWeight;
                 this.ourUtilitySpace.setWeight(issue, newWeight);
+            }
+
+            // re-weighing issues while making sure that the sum remains 1
+            for (Integer j : lastDiffSet.keySet()) {
+                Objective issue = this.ourUtilitySpace.getDomain()
+                        .getObjectivesRoot().getObjective(j);
+                double weight = this.ourUtilitySpace.getWeight(j);
+                this.ourUtilitySpace.setWeight(issue, weight / totalWeight);
             }
 
 
@@ -148,8 +131,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-
-//            System.out.println(" -> Bid of my randomBid: " + this.ourUtilitySpace.getUtility(randomBid));
         }
     }
 
@@ -167,6 +148,7 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
             System.out.println(issue.getDescription() + ":  " + value);
         }
     }
+
     @Override
     public double getUtility(Bid bid) {
         double result = 0;
@@ -182,22 +164,11 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
                 Double normalizer = Math.pow(value.getEvalMax() + 1, gamma);
                 eval = Math.pow(1 + eval, gamma) / normalizer;
                 result += weight * eval;
-                System.out.println(weight + ": " + eval);
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
             count++;
         }
-//        int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
-//            for (int i = 0; i < nrIssues; i++) {
-//                try {
-//                    ValueDiscrete valueOfIssue = (ValueDiscrete) bid.getValue(i);
-//                    Integer eval               = value.getEvaluationNotNormalized(valueOfIssue);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            result += opponentUtilitySpace.getUtility(bid);
-//        }
         System.out.println("Utility: " + result);
         System.out.println("=============================");
         return result;
