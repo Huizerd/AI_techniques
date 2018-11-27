@@ -63,7 +63,7 @@ public class Group31_OM extends OpponentModel {
                 .get(negotiationSession.getOpponentBidHistory().size() - 2);
         HashMap<Integer, Integer> lastDiffSet = determineDifference(prevOppBid, oppBid);
 
-        // Increment the values of the
+        // Increment the weights of issues that did not change their value since the last bid.
         double totalWeight = 0;
         for (Integer i : lastDiffSet.keySet()) {
             Objective issue = opponentUtilitySpace.getDomain()
