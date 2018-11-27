@@ -74,8 +74,14 @@ public class Group31_BS extends OfferingStrategy {
                 sortedUtilcopy.replaceAll(x -> Math.abs(x - gauss));
                 int minIndex = sortedUtilcopy.indexOf(Collections.min(sortedUtilcopy));
                 List<Bid> gaussBidList = this.bidBuckets.get(this.sortedUtilities.get(minIndex));
-                Bid bid = gaussBidList.get(random.nextInt(gaussBidList.size()));
-                return new BidDetails(bid, this.utilSpace.getUtility(bid), time);
+                //Bid bid = gaussBidList.get(random.nextInt(gaussBidList.size()));
+
+                List<BidDetails> returnBidDetails = new ArrayList<BidDetails>();
+                for (Bid bid:gaussBidList){
+                    returnBidDetails.add(new BidDetails(bid, this.utilSpace.getUtility(bid), time));
+                }
+                return this.omStrategy.getBid(returnBidDetails);
+                // return new BidDetails(bid, this.utilSpace.getUtility(bid), time);
             }
         }
         System.out.println("Return NUll");

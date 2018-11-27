@@ -13,6 +13,10 @@ import genius.core.utility.AdditiveUtilitySpace;
 import genius.core.utility.Evaluator;
 import genius.core.utility.EvaluatorDiscrete;
 
+import java.text.DecimalFormat;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -31,6 +35,10 @@ public class Group31_OM extends OpponentModel {
     private int windowSize;
     private double gamma;
 
+    private int verboseEval;
+    private int verboseWeights;
+    private int verboseBids;
+
     public Group31_OM() {
     }
 
@@ -42,12 +50,16 @@ public class Group31_OM extends OpponentModel {
             this.learnCoef = 0.2D;
         }
 
-        this.gamma = 0.5;
+        this.gamma = 0.8;
         this.learnValueAddition = 1;
         this.opponentUtilitySpace = (AdditiveUtilitySpace) var1.getUtilitySpace().copy();
         this.amountOfIssues = this.opponentUtilitySpace.getDomain().getIssues().size();
         this.goldenValue = this.learnCoef / (double) this.amountOfIssues;
         this.initializeModel();
+
+        this.verboseEval    = 1;
+        this.verboseWeights = 0;
+        this.verboseBids    = 0;
 
 //        INITIALIZATION OF TIME WINDOW SIZE
         this.windowSize = 5;
@@ -113,12 +125,26 @@ public class Group31_OM extends OpponentModel {
             ex.printStackTrace();
         }
 
-//        for (Entry<Objective, Evaluator> e : opponentUtilitySpace
-//                .getEvaluators()) {
-//            EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
-//            IssueDiscrete issue = ((IssueDiscrete) e.getKey());
-//            System.out.println(issue.getDescription() + ":  " + value);
-//        }
+        // DEBUGGING STEPS
+        if (this.verboseEval == 1){
+            System.out.println("\n =============================== ");
+            for (Entry<Objective, Evaluator> e : opponentUtilitySpace.getEvaluators()) {
+                EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+                IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+                System.out.println("Issue : " + issue.getName());
+
+                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+                for(ValueDiscrete valdis : value.getValues()){
+                    double eval          = Math.pow(1 + value.getValue(valdis), this.gamma);
+                    double evaluation    = round(eval/normalizer,2);
+                    double evaluationOld = round(value.getValue(valdis)/value.getEvalMax(),2);
+                    System.out.println("[" + valdis.toString() + "]\t\t: " + value.getValue(valdis) + "/" + value.getEvalMax() + " = "
+                                                + evaluationOld + " || Ours : " + evaluation);
+                }
+                System.out.println();
+            }
+            System.out.println("\n =============================== ");
+        }
     }
 
     @Override
@@ -131,17 +157,24 @@ public class Group31_OM extends OpponentModel {
                 EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
                 IssueDiscrete issue = ((IssueDiscrete) e.getKey());
                 ValueDiscrete issuevalue = (ValueDiscrete) bid.getValue(issue.getNumber());
+
+                // Our changes - (eval=count for each issue value)
                 Double eval = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
                 Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
                 eval = Math.pow(learnValueAddition + eval, this.gamma)/normalizer;
                 result += weight*eval;
-                System.out.println(weight + ": " + eval);
+                if (this.verboseBids == 1){
+                    System.out.println("Bid Weight: " + round(weight,2)+ ": Eval: " + eval);
+                }
+
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
             count++;
         }
-//        int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
+
+        if (this.verboseBids == 1){
+            int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
 //            for (int i = 0; i < nrIssues; i++) {
 //                try {
 //                    ValueDiscrete valueOfIssue = (ValueDiscrete) bid.getValue(i);
@@ -149,16 +182,19 @@ public class Group31_OM extends OpponentModel {
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            result += opponentUtilitySpace.getUtility(bid);
-//        }
-        System.out.println("Utility: " + result);
-        System.out.println("=============================");
+//                result += opponentUtilitySpace.getUtility(bid);
+//            }
+            System.out.println("Utility: " + result);
+            System.out.println("=============================");
+        }
         return result;
+    }
 
-            //            double eval = value.getDoubleValue(issuevalue);
-//            System.out.println("Int eval : " + eval + " || issuevalue.getValue() : " + value.getDoubleValue(issuevalue));
-//            Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-//            value.setEvaluationDouble(issuevalue, Math.pow(learnValueAddition + eval, this.gamma)/normalizer);
+    public static double round(double number, int decimalPlace) {
+        BigDecimal bd = new BigDecimal(number);
+        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        return bd.doubleValue();
+        // return bd.floatValue();
     }
 
     public String getName() {
