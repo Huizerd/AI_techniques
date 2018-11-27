@@ -44,7 +44,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 
         // Otherwise, return a random offer
         Bid rBid = generateRandomBid();
-        System.out.println(" --> " + this.ourUtilitySpace.getUtility(rBid));
         return new Offer(getPartyId(), rBid);
     }
 
@@ -111,7 +110,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
                         .getObjectivesRoot().getObjective(j);
                 double weight = this.ourUtilitySpace.getWeight(j);
                 this.ourUtilitySpace.setWeight(issue, weight / totalWeight);
-                System.out.println(issue.getName() + ": " + weight);
             }
 
 
