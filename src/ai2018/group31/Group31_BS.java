@@ -25,26 +25,21 @@ public class Group31_BS extends OfferingStrategy {
 
 
     public Group31_BS() {
-
     }
 
     @Override
     public void init(NegotiationSession var1, OpponentModel var2, OMStrategy var3, Map<String, Double> var4) {
-        this.timeBuckets = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
-        this.utilMeans = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
-        this.random = new Random();
+        this.timeBuckets        = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
+        this.utilMeans          = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
+        this.random             = new Random();
         this.negotiationSession = var1;
-        this.opponentModel = var2;
-        this.omStrategy = var3;
-        this.utilSpace = this.negotiationSession.getUtilitySpace();
-        this.bidBuckets = new HashMap<>();
+        this.opponentModel      = var2;
+        this.omStrategy         = var3;
+        this.utilSpace          = this.negotiationSession.getUtilitySpace();
+        this.bidBuckets         = new HashMap<>();
         this.initBidSpace();
-        sortedUtilities = new ArrayList<>(this.bidBuckets.keySet());
+        sortedUtilities         = new ArrayList<>(this.bidBuckets.keySet());
         Collections.sort(this.sortedUtilities);
-        for (double d : sortedUtilities) {
-            System.out.println(d);
-        }
-
     }
 
     public void initBidSpace() {
@@ -66,25 +61,27 @@ public class Group31_BS extends OfferingStrategy {
     @Override
     public BidDetails determineNextBid() {
         double time = this.negotiationSession.getTime();
+        // Step 1.1 -- Loop over the buckets
         for (int i = 0; i < this.timeBuckets.size() - 1; i++) {
             if (time >= this.timeBuckets.get(i) && time < this.timeBuckets.get(i + 1)) {
                 double gauss = getGaussWithBounds(this.utilMeans.get(i), this.utilMeans.get(i+1), 1.0);
-                // Get closest utility value.
+
+                // Step1.2 - Get a list of bids to offer.
                 List<Double> sortedUtilcopy = new ArrayList<>(this.sortedUtilities);
                 sortedUtilcopy.replaceAll(x -> Math.abs(x - gauss));
                 int minIndex = sortedUtilcopy.indexOf(Collections.min(sortedUtilcopy));
                 List<Bid> gaussBidList = this.bidBuckets.get(this.sortedUtilities.get(minIndex));
-                //Bid bid = gaussBidList.get(random.nextInt(gaussBidList.size()));
 
+                // Step 1.3 - Pick best bid from that offer using Opponent modeling
+                //Bid bid = gaussBidList.get(random.nextInt(gaussBidList.size()));
+                // return new BidDetails(bid, this.utilSpace.getUtility(bid), time);
                 List<BidDetails> returnBidDetails = new ArrayList<BidDetails>();
                 for (Bid bid:gaussBidList){
                     returnBidDetails.add(new BidDetails(bid, this.utilSpace.getUtility(bid), time));
                 }
                 return this.omStrategy.getBid(returnBidDetails);
-                // return new BidDetails(bid, this.utilSpace.getUtility(bid), time);
             }
         }
-        System.out.println("Return NUll");
         return null;
     }
 
@@ -97,7 +94,6 @@ public class Group31_BS extends OfferingStrategy {
             }
         }
     }
-
 
     public BidDetails determineOpeningBid() {
         return this.determineNextBid();

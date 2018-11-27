@@ -32,7 +32,6 @@ public class Group31_OM extends OpponentModel {
     private int learnValueAddition;
     private int amountOfIssues;
     private double goldenValue;
-    private int windowSize;
     private double gamma;
 
     private int verboseEval;
@@ -50,19 +49,19 @@ public class Group31_OM extends OpponentModel {
             this.learnCoef = 0.2D;
         }
 
-        this.gamma = 0.8;
-        this.learnValueAddition = 1;
+        this.learnValueAddition   = 1;
         this.opponentUtilitySpace = (AdditiveUtilitySpace) var1.getUtilitySpace().copy();
-        this.amountOfIssues = this.opponentUtilitySpace.getDomain().getIssues().size();
-        this.goldenValue = this.learnCoef / (double) this.amountOfIssues;
+        this.amountOfIssues       = this.opponentUtilitySpace.getDomain().getIssues().size();
+        this.goldenValue          = this.learnCoef / (double) this.amountOfIssues;
         this.initializeModel();
 
-        this.verboseEval    = 1;
+        // VARIABLE DEFINED BY GROUP31
+        this.gamma                = 0.8;
+
+        // DEBUGGING FLAGS
+        this.verboseEval    = 0;
         this.verboseWeights = 0;
         this.verboseBids    = 0;
-
-//        INITIALIZATION OF TIME WINDOW SIZE
-        this.windowSize = 5;
     }
 
     @Override
@@ -70,7 +69,6 @@ public class Group31_OM extends OpponentModel {
         if (negotiationSession.getOpponentBidHistory().size() < 2) {
             return;
         }
-        int numberOfUnchanged = 0;
         BidDetails oppBid = negotiationSession.getOpponentBidHistory()
                 .getHistory()
                 .get(negotiationSession.getOpponentBidHistory().size() - 1);
@@ -79,32 +77,38 @@ public class Group31_OM extends OpponentModel {
                 .get(negotiationSession.getOpponentBidHistory().size() - 2);
         HashMap<Integer, Integer> lastDiffSet = determineDifference(prevOppBid, oppBid);
 
-        // count the number of changes in value
-        for (Integer i : lastDiffSet.keySet()) {
-            if (lastDiffSet.get(i) == 0)
-                numberOfUnchanged++;
-        }
-
-        // The total sum of weights before normalization.
-        double totalSum = 1D + goldenValue * numberOfUnchanged;
-        // The maximum possible weight
-        double maximumWeight = 1D - (amountOfIssues) * goldenValue / totalSum;
-
-        // re-weighing issues while making sure that the sum remains 1
+        // Step1.1 : Increment the weights of issues that did not change their value since the last bid.
+        double totalWeight = 0;
         for (Integer i : lastDiffSet.keySet()) {
             Objective issue = opponentUtilitySpace.getDomain()
                     .getObjectivesRoot().getObjective(i);
             double weight = opponentUtilitySpace.getWeight(i);
             double newWeight;
 
-            if (lastDiffSet.get(i) == 0 && weight < maximumWeight) {
-                newWeight = (weight + goldenValue) / totalSum;
+            if (lastDiffSet.get(i) == 0) {
+                newWeight = (weight + goldenValue);
             } else {
-                newWeight = weight / totalSum;
+                newWeight = weight;
             }
+            totalWeight += newWeight;
             opponentUtilitySpace.setWeight(issue, newWeight);
         }
 
+        // Step1.2 : re-weighing issues while making sure that the sum remains 1
+        for (Integer i : lastDiffSet.keySet()) {
+            Objective issue = opponentUtilitySpace.getDomain()
+                    .getObjectivesRoot().getObjective(i);
+            double weight = opponentUtilitySpace.getWeight(i);
+            opponentUtilitySpace.setWeight(issue, weight / totalWeight);
+        }
+
+        totalWeight = 0;
+        for (Integer i : lastDiffSet.keySet()) {
+            double weight = opponentUtilitySpace.getWeight(i);
+            totalWeight += weight;
+        }
+
+        // Step 2
         // Then for each issue value that has been offered last time, a constant
         // value is added to its corresponding ValueDiscrete.
         try {
@@ -112,38 +116,36 @@ public class Group31_OM extends OpponentModel {
                     .getEvaluators()) {
                 EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
                 IssueDiscrete issue = ((IssueDiscrete) e.getKey());
-                /*
-                 * add constant learnValueAddition to the current preference of
-                 * the value to make it more important
-                 */
+                // add constant learnValueAddition to the current preference of the value to make it more important
                 ValueDiscrete issuevalue = (ValueDiscrete) oppBid.getBid()
                         .getValue(issue.getNumber());
                 Integer eval = value.getEvaluationNotNormalized(issuevalue);
                 value.setEvaluationDouble(issuevalue, learnValueAddition + eval);
             }
+
+            // DEBUGGING STEPS
+            if (this.verboseEval == 1){
+                System.out.println("\n =============================== ");
+                for (Entry<Objective, Evaluator> e : opponentUtilitySpace.getEvaluators()) {
+                    EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+                    IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+                    System.out.println("Issue : " + issue.getName());
+
+                    Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+                    for(ValueDiscrete valdis : value.getValues()){
+                        double eval          = Math.pow(1 + value.getValue(valdis), this.gamma);
+                        double evaluation    = round(eval/normalizer,2);
+                        double evaluationOld = round(value.getValue(valdis)/value.getEvalMax(),2);
+                        System.out.println("[" + valdis.toString() + "]\t\t: " + value.getValue(valdis) + "/" + value.getEvalMax() + " = "
+                                + evaluationOld + " || Ours : " + evaluation);
+                    }
+                    System.out.println();
+                }
+                System.out.println("\n =============================== ");
+            }
+
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
-
-        // DEBUGGING STEPS
-        if (this.verboseEval == 1){
-            System.out.println("\n =============================== ");
-            for (Entry<Objective, Evaluator> e : opponentUtilitySpace.getEvaluators()) {
-                EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
-                IssueDiscrete issue = ((IssueDiscrete) e.getKey());
-                System.out.println("Issue : " + issue.getName());
-
-                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-                for(ValueDiscrete valdis : value.getValues()){
-                    double eval          = Math.pow(1 + value.getValue(valdis), this.gamma);
-                    double evaluation    = round(eval/normalizer,2);
-                    double evaluationOld = round(value.getValue(valdis)/value.getEvalMax(),2);
-                    System.out.println("[" + valdis.toString() + "]\t\t: " + value.getValue(valdis) + "/" + value.getEvalMax() + " = "
-                                                + evaluationOld + " || Ours : " + evaluation);
-                }
-                System.out.println();
-            }
-            System.out.println("\n =============================== ");
         }
     }
 
@@ -159,14 +161,13 @@ public class Group31_OM extends OpponentModel {
                 ValueDiscrete issuevalue = (ValueDiscrete) bid.getValue(issue.getNumber());
 
                 // Our changes - (eval=count for each issue value)
-                Double eval = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
+                Double eval       = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
                 Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-                eval = Math.pow(learnValueAddition + eval, this.gamma)/normalizer;
-                result += weight*eval;
+                eval              = Math.pow(learnValueAddition + eval, this.gamma)/normalizer;
+                result            += weight*eval;
                 if (this.verboseBids == 1){
                     System.out.println("Bid Weight: " + round(weight,2)+ ": Eval: " + eval);
                 }
-
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
@@ -174,16 +175,6 @@ public class Group31_OM extends OpponentModel {
         }
 
         if (this.verboseBids == 1){
-            int nrIssues = negotiationSession.getUtilitySpace().getDomain().getIssues().size();
-//            for (int i = 0; i < nrIssues; i++) {
-//                try {
-//                    ValueDiscrete valueOfIssue = (ValueDiscrete) bid.getValue(i);
-//                    Integer eval               = value.getEvaluationNotNormalized(valueOfIssue);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                result += opponentUtilitySpace.getUtility(bid);
-//            }
             System.out.println("Utility: " + result);
             System.out.println("=============================");
         }
@@ -194,7 +185,6 @@ public class Group31_OM extends OpponentModel {
         BigDecimal bd = new BigDecimal(number);
         bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
         return bd.doubleValue();
-        // return bd.floatValue();
     }
 
     public String getName() {
@@ -235,10 +225,8 @@ public class Group31_OM extends OpponentModel {
      * if the value changed. If this is the case, a 1 is stored in a hashmap for
      * that issue, else a 0.
      *
-     * @param first
-     *            bid of the opponent
-     * @param second
-     *            bid
+     * @param first  bid of the opponent
+     * @param second bid
      * @return
      */
     private HashMap<Integer, Integer> determineDifference(BidDetails first,

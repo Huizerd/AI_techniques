@@ -20,11 +20,9 @@ public class Group31_AS extends AcceptanceStrategy {
     public Group31_AS() {
     }
 
-    public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat, double alpha, double beta) {
+    public Group31_AS(NegotiationSession negoSession, OfferingStrategy strat) {
         this.negotiationSession = negoSession;
-        this.offeringStrategy = strat;
-        this.a = alpha;
-        this.b = beta;
+        this.offeringStrategy   = strat;
     }
 
     @Override
@@ -32,14 +30,6 @@ public class Group31_AS extends AcceptanceStrategy {
                      Map<String, Double> parameters) {
         this.negotiationSession = negoSession;
         this.offeringStrategy = strat;
-
-        if (parameters.get("a") != null || parameters.get("b") != null) {
-            a = parameters.get("a");
-            b = parameters.get("b");
-        } else {
-            a = 1;
-            b = 0;
-        }
     }
 
     @Override

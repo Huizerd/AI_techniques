@@ -97,7 +97,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
         // Our previous OMS Model
 
         int randomBidIdx = 3;
-        Bid randomBid = bidOrder.get(randomBidIdx);
 
         for (int i = 1; i < bidOrder.size() - 1; i++) {
             Bid oppBid = bidOrder.get(i);
