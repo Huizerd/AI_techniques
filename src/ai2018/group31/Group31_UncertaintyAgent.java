@@ -1,6 +1,7 @@
 package ai2018.group31;
 
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import java.util.Map.Entry;
@@ -32,32 +33,30 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 //    this.utilMeans          = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
 //    this.random             = new Random();
 
+    Map<Bid, Double> smoothedUtils;
     List<Double> timeBuckets;
     List<Double> utilMeans;
-    UtilitySpace utilSpace;
     Map<Double, ArrayList<Bid>> bidBuckets;
     Random random;
     List<Double> sortedUtilities;
-    OpponentModel opponentModel;
+//    OpponentModel opponentModel;
 
     @Override
     public void init(NegotiationInfo info) {
         super.init(info);
         timeline = info.getTimeline();
-        estimateUtilitySpace();
+//        estimateUtilitySpace();
         this.negotiationSession = new NegotiationSession(null, ourUtilitySpace, timeline, null, info.getUserModel());
+        this.timeBuckets = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
+        this.utilMeans = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
+        this.random = new Random();
+        this.bidBuckets = new HashMap<>();
+        this.initBidSpace();
+        sortedUtilities = new ArrayList<>(this.bidBuckets.keySet());
+        Collections.sort(this.sortedUtilities);
 //        this.opponentModel = new Group31_OM();
 //        this.opponentModel.init(this.negotiationSession, null);
-        System.out.println("AMUNA SIKIM 4");
-        this.timeBuckets        = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
-        this.utilMeans          = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
-        this.random             = new Random();
-        this.utilSpace          = this.negotiationSession.getUtilitySpace();
-        this.bidBuckets         = new HashMap<>();
-        this.initBidSpace();
-        sortedUtilities         = new ArrayList<>(this.bidBuckets.keySet());
-        Collections.sort(this.sortedUtilities);
-        }
+    }
 
 //    @Override
 //    public Action chooseAction(List<Class<? extends Action>> possibleActions) {
@@ -83,7 +82,7 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 //        return new Offer(getPartyId(), rBid);
 //    }
 
-////////////////////////////////////
+    ////////////////////////////////////
 /////////////// AS /////////////////
 ////////////////////////////////////
     @Override
@@ -128,7 +127,7 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
         // Step 1.1 -- Loop over the buckets
         for (int i = 0; i < this.timeBuckets.size() - 1; i++) {
             if (time >= this.timeBuckets.get(i) && time < this.timeBuckets.get(i + 1)) {
-                double gauss = getGaussWithBounds(this.utilMeans.get(i), this.utilMeans.get(i+1), 1.0);
+                double gauss = getGaussWithBounds(this.utilMeans.get(i), this.utilMeans.get(i + 1), 1.0);
 
                 // Step1.2 - Get a list of bids to offer.
                 List<Double> sortedUtilcopy = new ArrayList<>(this.sortedUtilities);
@@ -140,8 +139,8 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
                 //Bid bid = gaussBidList.get(random.nextInt(gaussBidList.size()));
                 // return new BidDetails(bid, this.utilSpace.getUtility(bid), time);
                 List<BidDetails> returnBidDetails = new ArrayList<BidDetails>();
-                for (Bid bid:gaussBidList){
-                    returnBidDetails.add(new BidDetails(bid, this.utilSpace.getUtility(bid), time));
+                for (Bid bid : gaussBidList) {
+                    returnBidDetails.add(new BidDetails(bid, getUtility(bid), time));
                 }
                 return getOMSBid(returnBidDetails);
             }
@@ -191,26 +190,18 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 //        }
         // 4. The opponent model did not work, therefore, offer a random bid.
 //        if (allWereZero) {
-            Random r = new Random();
-//            return allBids.get(r.nextInt(allBids.size()));
-            return allBids.get(0);
-//        }
-//        return bestBid;
+        Random r = new Random();
+        return allBids.get(r.nextInt(allBids.size()));
+//            return allBids.get(0);
     }
 
     public void initBidSpace() {
-        BidIterator bidIterator = new BidIterator(this.utilSpace.getDomain());
-        if (!bidIterator.hasNext()) {
-            throw new IllegalStateException("The domain does not contain any bids!");
-        } else {
-            while (bidIterator.hasNext()) {
-                Bid bid = bidIterator.next();
-                double bidUtil = this.utilSpace.getUtility(bid);
-                if (!this.bidBuckets.containsKey(bidUtil)) {
-                    this.bidBuckets.put(bidUtil, new ArrayList<>());
-                }
-                this.bidBuckets.get(bidUtil).add(bid);
+        for (Bid bid : userModel.getBidRanking().getBidOrder()) {
+            double bidUtil = getUtility(bid);
+            if (!this.bidBuckets.containsKey(bidUtil)) {
+                this.bidBuckets.put(bidUtil, new ArrayList<>());
             }
+            this.bidBuckets.get(bidUtil).add(bid);
         }
     }
 
@@ -220,6 +211,7 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
      * space given uncertain preferences specified by the user model. This
      * example sets every value to zero.
      */
+    ///////////////////////////////////////////////////////////////////// Step1. - Estimate Master
     @Override
     public AbstractUtilitySpace estimateUtilitySpace() {
         System.out.println("\n\n =====================================");
@@ -239,20 +231,52 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
             evaluatorMap.put(issue, evaluator);
         }
         this.ourUtilitySpace = new AdditiveUtilitySpace(d, evaluatorMap);
+        this.smoothedUtils = new HashMap<>();
+
         updateUtilitySpace();
+        List<Bid> bidOrder = userModel.getBidRanking().getBidOrder();
+        smoothUtils(bidOrder);
+
+//        for (Bid bid : bidOrder) {
+//            System.out.println(round(getUtility(bid), 3));
+//        }
         printMasterPreference();
         return ourUtilitySpace;
     }
 
+    // Step 1.1
     public void updateUtilitySpace() {
         List<Bid> bidOrder = userModel.getBidRanking().getBidOrder();
+        List<Bid> bidOrder_reverse = new ArrayList<>(bidOrder);
+        Collections.reverse(bidOrder_reverse);
+
+        List<Bid> bidOrderExtended = new ArrayList<>();
+        for (int i = 0; i < bidOrder_reverse.size(); i++) {
+            Bid bidO = bidOrder_reverse.get(i);
+            if (i < bidOrder_reverse.size() / 3) {
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+            } else if (i >= bidOrder_reverse.size() / 3 && i <= 2 * bidOrder_reverse.size() / 3) {
+                bidOrderExtended.add(bidO);
+                bidOrderExtended.add(bidO);
+            } else {
+                bidOrderExtended.add(bidO);
+            }
+        }
+
         double goldenValue = 0.04;
         int learnValueAddition = 1;
 
         // Our previous OMS Model
-        for (int i = 1; i < bidOrder.size() - 1; i++) {
-            Bid oppBid = bidOrder.get(i);
-            Bid prevOppBid = bidOrder.get(i - 1);
+        for (int i = 1; i < bidOrderExtended.size() - 1; i++) {
+            Bid oppBid = bidOrderExtended.get(i);
+            Bid prevOppBid = bidOrderExtended.get(i - 1);
             HashMap<Integer, Integer> lastDiffSet = determineDifference(prevOppBid, oppBid);
 
             // Increment the weights of issues that did not change their value since the last bid.
@@ -302,26 +326,64 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
         }
     }
 
+    // Step 1.1
     public void printMasterPreference() {
-        double sum = 0;
-        for (int j = 1; j < this.ourUtilitySpace.getEvaluators().size() + 1; j++) {
-            System.out.println("Weight " + j + ": " + this.ourUtilitySpace.getWeight(j));
-            sum += this.ourUtilitySpace.getWeight(j);
-        }
-        System.out.println("sum: " + sum);
-        for (Entry<Objective, Evaluator> e : this.ourUtilitySpace
-                .getEvaluators()) {
+//        double sum = 0;
+//        for (int j = 1; j < this.ourUtilitySpace.getEvaluators().size() + 1; j++) {
+//            System.out.println("Weight " + j + ": " + this.ourUtilitySpace.getWeight(j));
+//            sum += this.ourUtilitySpace.getWeight(j);
+//        }
+//        System.out.println("sum: " + sum);
+//        for (Entry<Objective, Evaluator> e : this.ourUtilitySpace
+//                .getEvaluators()) {
+//            EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
+//            IssueDiscrete issue = ((IssueDiscrete) e.getKey());
+//            System.out.println(issue.getDescription() + ":  " + value);
+//        }
+        System.out.println("\n =============================== ");
+        for (Entry<Objective, Evaluator> e : ourUtilitySpace.getEvaluators()) {
             EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
             IssueDiscrete issue = ((IssueDiscrete) e.getKey());
-            System.out.println(issue.getDescription() + ":  " + value);
+            System.out.println("Issue : " + issue.getName());
+
+            Double normalizer = Math.pow(value.getEvalMax() + 1, 0.5);
+            for (ValueDiscrete valdis : value.getValues()) {
+                double eval = Math.pow(1 + value.getValue(valdis), 0.5);
+                double evaluation = round(eval / normalizer, 2);
+                double evaluationOld = round(value.getValue(valdis) / value.getEvalMax(), 2);
+                System.out.println("[" + valdis.toString() + "]\t\t: " + value.getValue(valdis) + "/" + value.getEvalMax() + " = "
+                        + evaluationOld + " || Ours : " + evaluation);
+            }
+            System.out.println();
+        }
+        System.out.println("\n =============================== ");
+    }
+
+    public static double round(double number, int decimalPlace) {
+        BigDecimal bd = new BigDecimal(number);
+        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        return bd.doubleValue();
+    }
+
+    public void smoothUtils(List<Bid> bidOrder) {
+        int window = (int) (0.05 * bidOrder.size());
+        for (int i = 0; i < window; i++) {
+            smoothedUtils.put(bidOrder.get(i), this.getOurUtility(bidOrder.get(i)));
+        }
+        for (int i = window; i < bidOrder.size(); i++) {
+            double sum = 0;
+            for (int j = 0; j < window; j++) {
+                sum += this.getOurUtility(bidOrder.get(i - j));
+            }
+            smoothedUtils.put(bidOrder.get(i), sum / (double) window);
         }
     }
 
-    @Override
-    public double getUtility(Bid bid) {
+    // Step 1.1
+    public double getOurUtility(Bid bid) {
         double result = 0;
         int count = 0;
-        double gamma = 0.5;
+        double gamma = 1;
         for (Entry<Objective, Evaluator> e : ourUtilitySpace.getEvaluators()) {
             Double weight = ourUtilitySpace.getWeight(count);
             try {
@@ -337,8 +399,6 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
             }
             count++;
         }
-        System.out.println("Utility: " + result);
-        System.out.println("=============================");
         return result;
     }
 
@@ -357,6 +417,18 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 
         return diff;
     }
+    ////////////////////////////// MASTER FUNCS ///////////////////////
+
+    @Override
+    public double getUtility(Bid bid) {
+        try {
+            return this.smoothedUtils.get(bid);
+        } catch (Exception e) {
+            System.out.println("Bid does not exist yet: " + bid);
+        }
+        return 0;
+    }
+
 
     @Override
     public String getDescription() {
