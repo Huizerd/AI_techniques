@@ -32,6 +32,10 @@ public class Group31_AS extends AcceptanceStrategy {
 
     @Override
     public Actions determineAcceptability() {
+        double time_left = negotiationSession.getTimeline().getTotalTime() - negotiationSession.getTimeline().getCurrentTime();
+        if(time_left <= 2)
+            return Actions.Accept;
+
         double now = this.negotiationSession.getTime();
         int current_k = negotiationSession.getOpponentBidHistory().getHistory().size();
         if (current_k > this.window) {
@@ -52,6 +56,7 @@ public class Group31_AS extends AcceptanceStrategy {
                 return Actions.Accept;
             }
         }
+
         return Actions.Reject;
     }
 
