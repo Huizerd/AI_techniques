@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 import genius.core.Bid;
+import genius.core.BidHistory;
 import genius.core.Domain;
 import genius.core.actions.Accept;
 import genius.core.actions.Action;
@@ -15,10 +16,6 @@ import genius.core.parties.AbstractNegotiationParty;
 import genius.core.parties.NegotiationInfo;
 import genius.core.boaframework.NegotiationSession;
 import genius.core.utility.*;
-
-import genius.core.uncertainty.AdditiveUtilitySpaceFactory;
-import genius.core.uncertainty.ExperimentalUserModel;
-import genius.core.boaframework.OpponentModel;
 
 public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
 
@@ -32,31 +29,30 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
     Map<Double, ArrayList<Bid>> bidBuckets;
     Random random;
     List<Double> sortedUtilities;
+    BidHistory oppBidHistory;
 
-    int window = 11;
-    double gamma = 1.0;
+    double gamma  = 1.0;
+    int window    = 11;
 
-    boolean verboseMasterModel = true;
+    boolean verboseMasterModel = false;
+    boolean verboseBids        = false;
 
     @Override
     public void init(NegotiationInfo info) {
         super.init(info);
-
         timeline = info.getTimeline();
         this.negotiationSession = new NegotiationSession(null, ourUtilitySpace, timeline, null, info.getUserModel());
         this.timeBuckets        = new ArrayList<>(Arrays.asList(0.0, 0.5, 0.95, 1.0));
         this.utilMeans          = new ArrayList<>(Arrays.asList(1.0, 0.9, 0.8, 0.6));
+
         this.random             = new Random();
         this.bidBuckets         = new HashMap<>();
-        this.gamma              = 1.0;
 
+        this.oppBidHistory = new BidHistory();
         this.initBidSpace();
         sortedUtilities = new ArrayList<>(this.bidBuckets.keySet());
         Collections.sort(this.sortedUtilities);
 
-        //        estimateUtilitySpace();
-//        this.opponentModel = new Group31_OM();
-//        this.opponentModel.init(this.negotiationSession, null);
     }
 
     /*
@@ -65,25 +61,29 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
     @Override
     public Action chooseAction(List<Class<? extends Action>> possibleActions) {
         double now = this.negotiationSession.getTime();
-        int current_k = negotiationSession.getOpponentBidHistory().getHistory().size();
+        if (getLastReceivedAction() instanceof Offer) {
+            Bid oppLastBid = ((Offer) getLastReceivedAction()).getBid();
+            this.oppBidHistory.add(new BidDetails(oppLastBid, this.getOurUtility(oppLastBid),now) );
+        }
+        int current_k = this.oppBidHistory.size();
         BidDetails nextMyBid = determineNextBid();
 
-        if (current_k > this.window) {
-            List<BidDetails> history = negotiationSession.getOpponentBidHistory().getHistory();
-            Bid oppLastBid = this.negotiationSession.getOpponentBidHistory().getLastBidDetails().getBid();
-            double discountedOppBid = this.negotiationSession.getUtilitySpace().getUtilityWithDiscount(oppLastBid, now);
+        if (current_k > this.window && getLastReceivedAction() instanceof Offer) {
+            List<BidDetails> history = this.oppBidHistory.getHistory();
+            Bid oppLastBid           = ((Offer) getLastReceivedAction()).getBid();
+            double discountedOppBid  = this.getOurUtility(oppLastBid);
 
             int lookback = Math.max(history.size() - this.window, 0);
             double sum = 0;
             for (int i = lookback; i < history.size(); i++) {
-                sum += history.get(i).getMyUndiscountedUtil();
+                sum += this.getOurUtility(history.get(i).getBid());
             }
 
-            double nextMyBidUtil = nextMyBid.getMyUndiscountedUtil();
+            double nextMyBidUtil = this.getOurUtility(nextMyBid.getBid());
 
             double opponentWindowedAverage = sum / (double) window;
-
-            if (discountedOppBid >= opponentWindowedAverage && discountedOppBid >= nextMyBidUtil) {
+            double time_left = negotiationSession.getTimeline().getTotalTime() - negotiationSession.getTimeline().getCurrentTime();
+            if ((discountedOppBid >= opponentWindowedAverage && discountedOppBid >= nextMyBidUtil) || time_left <= 2 ) {
                 return new Accept(getPartyId(), oppLastBid);
             }
         }
@@ -97,24 +97,40 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
     // [Bidding Strategy] Main Entry
     public BidDetails determineNextBid() {
         double time = this.negotiationSession.getTime();
-
+        int closestBidWindow = 1;
         // Step 1.1 -- Loop over the buckets
         for (int i = 0; i < this.timeBuckets.size() - 1; i++) {
             if (time >= this.timeBuckets.get(i) && time < this.timeBuckets.get(i + 1)) {
-                double gauss = getGaussWithBounds(this.utilMeans.get(i), this.utilMeans.get(i + 1), 1.0);
+                double mean = this.utilMeans.get(i);
+                double lowerB = this.utilMeans.get(i + 1);
+                double gauss = getGaussWithBounds(mean, lowerB, 1);
 
                 // Step1.2 - Get a list of bids to offer.
                 List<Double> sortedUtilcopy = new ArrayList<>(this.sortedUtilities);
-                sortedUtilcopy.replaceAll(x -> Math.abs(x - gauss));
-                int minIndex = sortedUtilcopy.indexOf(Collections.min(sortedUtilcopy));
-                List<Bid> gaussBidList = this.bidBuckets.get(this.sortedUtilities.get(minIndex));
+                sortedUtilcopy.replaceAll(x -> Math.abs(x - gauss));  //distance to gauss
+                List<Double> descendedDistance = new ArrayList<>(sortedUtilcopy);
+                Collections.sort(descendedDistance);
+                List<Bid> gaussBidList = new ArrayList<>();
+                for (int j = 0; j < closestBidWindow; j++) {
+                    int newIndex = sortedUtilcopy.indexOf(descendedDistance.get(j));
+                    for( Bid b : this.bidBuckets.get(this.sortedUtilities.get(newIndex))) {
+                        gaussBidList.add(b);
+                    }
+                }
 
                 // Step 1.3 - Pick best bid from that offer using Opponent modeling
                 List<BidDetails> returnBidDetails = new ArrayList<BidDetails>();
                 for (Bid bid : gaussBidList) {
                     returnBidDetails.add(new BidDetails(bid, getUtility(bid), time));
                 }
-                return getOMSBid(returnBidDetails);
+                BidDetails returnBidDetail = getOMSBid(returnBidDetails);
+
+                if (verboseBids){
+                    System.out.println("[" + this.utilMeans.get(i) + "/" + this.utilMeans.get(i + 1) + "][" + gauss + "][Offered Bid]: " + this.getUtility(returnBidDetail.getBid()));
+                    System.out.println(gaussBidList.size());
+                }
+
+                return returnBidDetail;
             }
         }
         return null;
@@ -275,27 +291,36 @@ public class Group31_UncertaintyAgent extends AbstractNegotiationParty {
             }
             smoothedUtils.put(bidOrder.get(i), sum / (double) window);
         }
+        double max = Collections.max(smoothedUtils.values());
+        double min = Collections.min(smoothedUtils.values());
+        for (Entry<Bid, Double> entry :
+                smoothedUtils.entrySet()) {
+            double newUtil = (entry.getValue()-min)/(max-min);
+//            double newUtil = entry.getValue()/max;
+            smoothedUtils.put(entry.getKey(), newUtil);
+        }
     }
 
     // [MASTER MODELLING] Step 3
     public double getOurUtility(Bid bid) {
         double result = 0;
-        int count     = 0;
+        int count     = 1;
         for (Entry<Objective, Evaluator> e : ourUtilitySpace.getEvaluators()) {
-            Double weight = ourUtilitySpace.getWeight(count);
-            try {
-                EvaluatorDiscrete value = (EvaluatorDiscrete) e.getValue();
-                IssueDiscrete issue = ((IssueDiscrete) e.getKey());
-                ValueDiscrete issuevalue = (ValueDiscrete) bid.getValue(issue.getNumber());
-                Double eval = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
-                Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
-                eval = Math.pow(1 + eval, this.gamma) / normalizer;
-                result += weight * eval;
-            } catch (Exception e1) {
-                e1.printStackTrace();
+                double weight = ourUtilitySpace.getWeight(count);
+                try {
+                    EvaluatorDiscrete value  = (EvaluatorDiscrete) e.getValue();
+                    IssueDiscrete issue      = ((IssueDiscrete) e.getKey());
+                    ValueDiscrete issuevalue = (ValueDiscrete) bid.getValue(issue.getNumber());
+
+                    Double eval       = Double.valueOf(value.getEvaluationNotNormalized(issuevalue));
+                    Double normalizer = Math.pow(value.getEvalMax() + 1, this.gamma);
+                    eval              = Math.pow(1 + eval, this.gamma) / normalizer;
+                    result            += weight * eval;
+
+                } catch (Exception e1) {
+                }
+                count++;
             }
-            count++;
-        }
         return result;
     }
 
