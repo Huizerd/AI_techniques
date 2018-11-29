@@ -17,23 +17,36 @@
             <item classpath="negotiator.boaframework.omstrategy.BestBid"/>
         </omStrategy>
     </boaparties>
-    <boaparties partyName="Group31Party">
+    <boaparties partyName="Group31_HH">
         <properties/>
         <biddingStrategy>
-            <item classpath="/home/huis/Projects/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_BS.class"/>
+            <item classpath="negotiator.boaframework.offeringstrategy.anac2010.AgentK_Offering"/>
         </biddingStrategy>
         <acceptanceStrategy>
-            <parameters name="a" value="1.0"/>
-            <parameters name="b" value="0.0"/>
-            <item classpath="/home/huis/Projects/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_AS.class"/>
+            <item classpath="negotiator.boaframework.acceptanceconditions.anac2010.AC_AgentK"/>
         </acceptanceStrategy>
         <opponentModel>
             <parameters name="l" value="0.2"/>
-            <item classpath="/home/huis/Projects/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OM.class"/>
+            <item classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_Hardheaded.class"/>
         </opponentModel>
         <omStrategy>
-            <parameters name="t" value="1.1"/>
-            <item classpath="/home/huis/Projects/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OMS.class"/>
+            <item classpath="negotiator.boaframework.omstrategy.NTFTstrategy"/>
+        </omStrategy>
+    </boaparties>
+    <boaparties partyName="Group31_OM">
+        <properties/>
+        <biddingStrategy>
+            <item classpath="negotiator.boaframework.offeringstrategy.anac2010.AgentK_Offering"/>
+        </biddingStrategy>
+        <acceptanceStrategy>
+            <item classpath="negotiator.boaframework.acceptanceconditions.anac2010.AC_AgentK"/>
+        </acceptanceStrategy>
+        <opponentModel>
+            <parameters name="l" value="0.2"/>
+            <item classpath="/home/shivam/master_workspace/AI_techniques/out/production/AI_techniques/ai2018/group31/Group31_OM.class"/>
+        </opponentModel>
+        <omStrategy>
+            <item classpath="negotiator.boaframework.omstrategy.NTFTstrategy"/>
         </omStrategy>
     </boaparties>
     <boaparties partyName="Group31Party_TheNegotiator_AS">

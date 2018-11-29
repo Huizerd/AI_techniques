@@ -22,12 +22,6 @@ import java.util.*;
 public class Group31_OMS extends OMStrategy {
 
     /**
-     * when to stop updating the opponentmodel. Note that this value is not
-     * exactly one as a match sometimes lasts slightly longer.
-     */
-    double updateThreshold = 1.1;
-
-    /**
      * Initializes the opponent model strategy. If a value for the parameter t
      * is given, then it is set to this value. Otherwise, the default value is
      * used.
@@ -37,17 +31,10 @@ public class Group31_OMS extends OMStrategy {
      * @param model
      *            opponent model used in conjunction with this opponent modeling
      *            strategy.
-     * @param parameters
-     *            set of parameters for this opponent model strategy.
      */
     @Override
     public void init(NegotiationSession negotiationSession, OpponentModel model, Map<String, Double> parameters) {
         super.init(negotiationSession, model, new HashMap<String, Double>());
-        if (parameters.get("t") != null) {
-            updateThreshold = parameters.get("t").doubleValue();
-        } else {
-            System.out.println("OMStrategy assumed t = 1.1");
-        }
     }
 
     /**
@@ -72,11 +59,11 @@ public class Group31_OMS extends OMStrategy {
         // to ensure that the opponent model works. If the opponent model
         // does not work, offer a random bid.
         boolean allWereZero = true;
-        // 3. Determine the best bid
+        // 3. Determine the best bid from a given list of details
         for (BidDetails bid : allBids) {
-            double Uown = this.negotiationSession.getUtilitySpace().getUtility(bid.getBid());
-            double Uopp = model.getBidEvaluation(bid.getBid());
-            double evaluation = Math.sqrt(Uown*Uown + Uopp*Uopp);
+            double uOwn       = this.negotiationSession.getUtilitySpace().getUtility(bid.getBid());
+            double uOpp       = model.getBidEvaluation(bid.getBid());
+            double evaluation = Math.sqrt(uOwn*uOwn + uOpp*uOpp);
             if (evaluation > 0.000001) {
                 allWereZero = false;
             }
@@ -91,7 +78,6 @@ public class Group31_OMS extends OMStrategy {
             return allBids.get(r.nextInt(allBids.size()));
         }
         return bestBid;
-
     }
 
 
@@ -103,7 +89,7 @@ public class Group31_OMS extends OMStrategy {
      */
     @Override
     public boolean canUpdateOM() {
-        return negotiationSession.getTime() < updateThreshold;
+        return true;
     }
 
     @Override
