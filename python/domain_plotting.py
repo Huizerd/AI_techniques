@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-FNAME = 'data/domains_tournament_3.csv'
+FNAME = 'data/domains_tournament.csv'
 
 AGENTS = ['Own',
           'TheNegotiator',

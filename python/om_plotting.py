@@ -2,11 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-FNAME = ['data/own_tournament.csv',
-         'data/own_hardheaded_om_tournament.csv']
+FNAME = ['data/own_hardheaded_om_tournament.csv']
 
-AGENTS = ['Own',
-          'Own_HardHeaded']
+AGENTS = ['Own_HardHeaded']
 
 OPPONENTS = ['TheNegotiator',
              'HardHeaded',
