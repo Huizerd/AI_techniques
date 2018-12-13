@@ -1,0 +1,312 @@
+{
+	"issues": {
+		"Fruit": [
+			"Apples",
+			"Oranges",
+			"Banana",
+			"Strawberry",
+			"Peach"
+		],
+		"Juice": [
+			"Milk",
+			"Yoghurt",
+			"Skim milk",
+			"Water"
+		],
+		"Topping1": [
+			"None",
+			"Fresh fruit",
+			"Walnuts",
+			"Almonds",
+			"Kokos flakes",
+			"Chocolate"
+		],
+		"Topping2": [
+			"None",
+			"Fresh fruit",
+			"Walnuts",
+			"Almonds",
+			"Kokos flakes",
+			"Chocolate"
+		]
+	},
+	"Utility2": {
+		"Fruit": {
+			"weight": 0.5,
+			"Apples": 0,
+			"Oranges": 0.3,
+			"Banana": 0.2,
+			"Strawberry": 1,
+			"Peach": 0
+		},
+		"Juice": {
+			"weight": 0.1,
+			"Milk": 0,
+			"Yoghurt": 1,
+			"Skim milk": 0.5,
+			"Water": 0.6
+		},
+		"Topping1": {
+			"weight": 0.3,
+			"None": 0,
+			"Fresh fruit": 0.3,
+			"Walnuts": 0.2,
+			"Almonds": 1,
+			"Kokos flakes": 0.1,
+			"Chocolate": 1
+		},
+		"Topping2": {
+			"weight": 0.1,
+			"None": 0.3,
+			"Fresh fruit": 0.8,
+			"Walnuts": 0.1,
+			"Almonds": 1,
+			"Kokos flakes": 0.1,
+			"Chocolate": 1
+		}
+	},
+	"Utility1": {
+		"Fruit": {
+			"weight": 0.3,
+			"Apples": 1,
+			"Oranges": 0.3,
+			"Banana": 0.5,
+			"Strawberry": 0.1,
+			"Peach": 0.8
+		},
+		"Juice": {
+			"weight": 0.3,
+			"Milk": 1,
+			"Yoghurt": 0.3,
+			"Skim milk": 0.5,
+			"Water": 0.1
+		},
+		"Topping1": {
+			"weight": 0.3,
+			"None": 1,
+			"Fresh fruit": 0.3,
+			"Walnuts": 0.5,
+			"Almonds": 0.1,
+			"Kokos flakes": 0.1,
+			"Chocolate": 0.1
+		},
+		"Topping2": {
+			"weight": 0.1,
+			"None": 1,
+			"Fresh fruit": 0.3,
+			"Walnuts": 0.5,
+			"Almonds": 0.1,
+			"Kokos flakes": 0.1,
+			"Chocolate": 0.1
+		}
+	},
+	"bids": [{
+			"round": "0",
+			"agent1": "Apples,Milk,None,None",
+			"agent2": "Strawberry,Yoghurt,Almonds,Almonds"
+		},
+		{
+			"round": "1",
+			"agent1": "Banana,Milk,Chocolate,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "2",
+			"agent1": "Peach,Water,Walnuts,Kokos flakes",
+			"agent2": "Strawberry,Water,Chocolate,Almonds"
+		},
+		{
+			"round": "3",
+			"agent1": "Apples,Yoghurt,Kokos flakes,Chocolate",
+			"agent2": "Strawberry,Skim milk,Almonds,Chocolate"
+		},
+		{
+			"round": "4",
+			"agent1": "Oranges,Skim milk,Chocolate,None",
+			"agent2": "Strawberry,Skim milk,Almonds,Fresh fruit"
+		},
+		{
+			"round": "5",
+			"agent1": "Oranges,Yoghurt,Almonds,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Almonds,Kokos flakes"
+		},
+		{
+			"round": "6",
+			"agent1": "Oranges,Skim milk,Almonds,Chocolate",
+			"agent2": "Strawberry,Yoghurt,Almonds,Almonds"
+		},
+		{
+			"round": "7",
+			"agent1": "Strawberry,Skim milk,Chocolate,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "8",
+			"agent1": "Apples,Water,Chocolate,None",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Chocolate"
+		},
+		{
+			"round": "9",
+			"agent1": "Apples,Skim milk,Walnuts,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Chocolate"
+		},
+		{
+			"round": "10",
+			"agent1": "Banana,Yoghurt,None,Kokos flakes",
+			"agent2": "Strawberry,Yoghurt,Almonds,Fresh fruit"
+		},
+		{
+			"round": "11",
+			"agent1": "Banana,Yoghurt,None,Almonds",
+			"agent2": "Strawberry,Water,Almonds,Chocolate"
+		},
+		{
+			"round": "12",
+			"agent1": "Banana,Milk,Chocolate,None",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "13",
+			"agent1": "Banana,Skim milk,Fresh fruit,Almonds",
+			"agent2": "Strawberry,Water,Almonds,Almonds"
+		},
+		{
+			"round": "14",
+			"agent1": "Apples,Yoghurt,Kokos flakes,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Almonds,Almonds"
+		},
+		{
+			"round": "15",
+			"agent1": "Strawberry,Water,Walnuts,Kokos flakes",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "16",
+			"agent1": "Peach,Yoghurt,Chocolate,None",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Chocolate"
+		},
+		{
+			"round": "17",
+			"agent1": "Strawberry,Yoghurt,Chocolate,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Almonds,Fresh fruit"
+		},
+		{
+			"round": "18",
+			"agent1": "Oranges,Water,Walnuts,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "19",
+			"agent1": "Apples,Yoghurt,Fresh fruit,Almonds",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "20",
+			"agent1": "Apples,Skim milk,Kokos flakes,None",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "21",
+			"agent1": "Oranges,Yoghurt,None,Fresh fruit",
+			"agent2": "Strawberry,Water,Almonds,Almonds"
+		},
+		{
+			"round": "22",
+			"agent1": "Banana,Milk,None,Kokos flakes",
+			"agent2": "Strawberry,Yoghurt,Almonds,Almonds"
+		},
+		{
+			"round": "23",
+			"agent1": "Oranges,Milk,Chocolate,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "24",
+			"agent1": "Apples,Water,Chocolate,Kokos flakes",
+			"agent2": "Strawberry,Water,Chocolate,Almonds"
+		},
+		{
+			"round": "25",
+			"agent1": "Oranges,Water,Walnuts,Almonds",
+			"agent2": "Strawberry,Skim milk,Almonds,Chocolate"
+		},
+		{
+			"round": "26",
+			"agent1": "Banana,Yoghurt,Chocolate,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "27",
+			"agent1": "Banana,Water,Chocolate,Fresh fruit",
+			"agent2": "Strawberry,Water,Almonds,Almonds"
+		},
+		{
+			"round": "28",
+			"agent1": "Banana,Water,Chocolate,Fresh fruit",
+			"agent2": "Strawberry,Skim milk,Chocolate,Almonds"
+		},
+		{
+			"round": "29",
+			"agent1": "Strawberry,Water,Almonds,Walnuts",
+			"agent2": "Strawberry,Water,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "30",
+			"agent1": "Banana,Yoghurt,Chocolate,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Fresh fruit"
+		},
+		{
+			"round": "31",
+			"agent1": "Apples,Milk,Chocolate,Almonds",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Almonds"
+		},
+		{
+			"round": "32",
+			"agent1": "Peach,Skim milk,Walnuts,Chocolate",
+			"agent2": "Strawberry,Water,Chocolate,Chocolate"
+		},
+		{
+			"round": "33",
+			"agent1": "Banana,Water,Almonds,Kokos flakes",
+			"agent2": "Strawberry,Skim milk,Chocolate,Chocolate"
+		},
+		{
+			"round": "34",
+			"agent1": "Apples,Milk,Kokos flakes,Chocolate",
+			"agent2": "Strawberry,Water,Chocolate,Chocolate"
+		},
+		{
+			"round": "35",
+			"agent1": "Apples,Water,Fresh fruit,Fresh fruit",
+			"agent2": "Strawberry,Skim milk,Chocolate,Chocolate"
+		},
+		{
+			"round": "36",
+			"agent1": "Banana,Milk,Walnuts,Fresh fruit",
+			"agent2": "Strawberry,Yoghurt,Chocolate,Chocolate"
+		},
+		{
+			"round": "37",
+			"agent1": "Strawberry,Skim milk,Walnuts,Kokos flakes",
+			"agent2": "Strawberry,Yoghurt,Almonds,Fresh fruit"
+		},
+		{
+			"round": "38",
+			"agent1": "Banana,Water,Walnuts,Kokos flakes",
+			"agent2": "Strawberry,Water,Almonds,Chocolate"
+		},
+		{
+			"round": "39",
+			"agent1": "Apples,Yoghurt,Fresh fruit,Walnuts",
+			"agent2": "Strawberry,Yoghurt,Almonds,Chocolate"
+		},
+		{
+			"round": "40",
+			"agent1": "Strawberry,Water,Almonds,Almonds"
+		},
+		{
+			"round": "41",
+			"accept": "agent1"
+		}
+	]
+}
