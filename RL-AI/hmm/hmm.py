@@ -1,171 +1,201 @@
 """
-Contains the HMM class.
+Contains the HMM functions.
 @author: Group 31
 """
 
+import json
 import os
 import re
-import json
+from collections import Counter, OrderedDict
 
 import numpy as np
 
 
-class HMM:
-    """
-    Contains the HMM structure and functions.
-    """
+# Go from bid -> utility
+def get_utility(bid, pref):
+    util = 0
+    issuelist = list(pref.keys())
+    for issueindex, issue in enumerate(issuelist):
+        # values of issue in given bid
+        value = pref[issue][bid[issueindex]]
+        # weight of issue in given bid
+        weight = pref[issue]['weight']
+        util += weight * value
 
-    def __init__(self, states, observations):
-        """
-        HMM initialization.
-        :param state: List of possible states.
-        :param observations: List of possible observations.
-        """
+    return util
 
-        # Create a mapping from states to indices
-        self.states = {state: i for i, state in enumerate(states)}
 
-        # Create a mapping from observations to indices
-        self.observations = {obs: i for i, obs in enumerate(observations)}
+# Utility change to discrete move type
+def delta_mapping(delta_util, silent_bound=0.01):
+    if (abs(delta_util[0]) <= silent_bound and abs(delta_util[1]) <= silent_bound):
+        return 'silent'
+    if (abs(delta_util[0]) <= silent_bound and delta_util[1]) > silent_bound:
+        return 'nice'
+    if (delta_util[0] <= 0 and delta_util[1] <= 0):
+        return 'unfortunate'
+    if (delta_util[0] > 0 and delta_util[1] <= 0):
+        return 'selfish'
+    if (delta_util[0] > 0 and delta_util[1] > 0):
+        return 'fortunate'
+    if (delta_util[0] <= 0 and delta_util[1] > 0):
+        return 'concession'
 
-        # Initialize state probabilities
-        self.init_states = [1 / len(states) for _ in states]
 
-        # Initialize transition matrix
-        self.transition_matrix = np.identity(len(states))
+# List of bids to list of discrete moves
+def discritized_mapping(agent_bids, silent_bound=0.01):
+    mapped_utils_discrete = []
+    prev_utils = agent_bids[0]
 
-        # Initialize observation matrix
-        self.observation_matrix = 1 / len(observations) * np.ones((len(states), len(observations)))
+    for new_utils in agent_bids[1:]:
+        delta_util1 = new_utils[0] - prev_utils[0]
+        delta_util2 = new_utils[1] - prev_utils[1]
+        delta_util = (delta_util1, delta_util2)
+        mapped_utils_discrete.append(delta_mapping(delta_util, silent_bound))
+        prev_utils = new_utils
 
-    def fit(self, training_dir, parties, silent_thres=0.005):
-        """
-        Fit the HMM.
-        :param training_dir: Location of the negotiation session training logs (JSON files).
-        :param parties: List of negotiation parties taking part.
-        :param silent_thres: Threshold for classifying silent moves.
-        :return:
-        """
+    return mapped_utils_discrete
 
-        # Retrieve all negotiation sessions
-        sessions = self.get_sessions(training_dir)
 
-        # Classify party bids for all sessions
-        party_counter = self.classify_bids(sessions, parties)
+def retrieve_all_agents_bids(train, silent_bound=0.01):
+    # Useful structures
+    all_issues = train['issues']
+    pref1 = train['Utility1']
+    pref2 = train['Utility2']
+    all_bids = train['bids']
 
-    def get_sessions(self, logs_dir):
-        """
-        Retrieves negotiation sessions from a certain directory.
-        :param training_dir: Location of the negotiation session logs (JSON files).
-        :return: List negotiation session dictionaries.
-        """
+    mapped_utils_a1 = []
+    mapped_utils_a2 = []
 
-        # Initialize sessions
-        sessions = []
+    # Parse utility values of bids
+    for bid in all_bids:
+        r = bid['round']
+        # stop if the negotiation session has ended
+        if 'agent1' in bid:
+            bid_agent1 = bid['agent1'].split(',')
+            u1_b1 = get_utility(bid_agent1, pref1)
+            u2_b1 = get_utility(bid_agent1, pref2)
+            # Save the bid -> utility mapping
+            mapped_utils_a1.append([u1_b1, u2_b1, int(r)])
+        if 'agent2' in bid:
+            bid_agent2 = bid['agent2'].split(',')
+            u1_b2 = get_utility(bid_agent2, pref1)
+            u2_b2 = get_utility(bid_agent2, pref2)
+            mapped_utils_a2.append([u2_b2, u1_b2, int(r)])
 
-        # List all logs
-        logs = os.listdir(logs_dir)
+    agent1_bids = [mapped_utils_a1[i][0:2] for i in range(len(mapped_utils_a1))]
+    agent2_bids = [mapped_utils_a2[i][0:2] for i in range(len(mapped_utils_a2))]
 
-        # Go over all
-        for l in logs:
-            with open(os.path.join(logs_dir, l)) as f:
-                sessions.append({'parties': re.split(r'[^A-Za-z]+', l)[0:2], 'data': json.load(f)})
+    # Discretize bidspace
+    agent1_bids_discrete = discritized_mapping(agent1_bids, silent_bound)
+    agent2_bids_discrete = discritized_mapping(agent2_bids, silent_bound)
 
-        return sessions
+    return (agent1_bids_discrete, agent2_bids_discrete)
 
-    def classify_bids(self, sessions, parties):
-        """
-        Classifies bids of parties into categories over multiple negotiation sessions.
-        :param sessions: List of negotiation session dictionaries.
-        :param parties: List of negotiation parties taking part.
-        :return: Counter of bid categories for each party.
-        """
 
-        # Counter of bid types for each party
-        party_counter = {party: [] for party in parties}
+def get_bids(training_dir, silent_bound=0.01, combined=False):
+    train_files = os.listdir(training_dir)
+    agent_count_mapping = {}
+    for t in train_files:
+        train = json.load(open(os.path.join(training_dir, t)))
+        a1_name, a2_name = re.split(r'[^A-Za-z]+', t.strip('.json'))[0:2]
+        a1_bids, a2_bids = retrieve_all_agents_bids(train, silent_bound)
 
-        # Loop over all sessions
-        for sess in sessions:
-            # Extract names and bid lists (which also classifies bids)
-            party1_name, party2_name = sess['parties'][0:2]
-            party1_bids, party2_bids = get_bids(sess)
+        if a1_name not in agent_count_mapping:
+            agent_count_mapping[a1_name] = []
+        if a2_name not in agent_count_mapping:
+            agent_count_mapping[a2_name] = []
 
-            # Update counter
-            party_counter[party1_name] += party1_bids
-            party_counter[party2_name] += party2_bids
+        if combined:
+            a1_com = [a1_bids[i] + a2_bids[i] for i in range(min(len(a1_bids), len(a2_bids)))]
+            a2_com = [a2_bids[i] + a1_bids[i] for i in range(min(len(a1_bids), len(a2_bids)))]
 
-        return party_counter
+            agent_count_mapping[a1_name] = agent_count_mapping[a1_name] + a1_com
+            agent_count_mapping[a2_name] = agent_count_mapping[a2_name] + a2_com
+        else:
+            agent_count_mapping[a1_name] = agent_count_mapping[a1_name] + a1_bids
+            agent_count_mapping[a2_name] = agent_count_mapping[a2_name] + a2_bids
 
-    def get_utility(bid, pref):
-        util = 0
-        issuelist = list(pref.keys())
-        for issueindex, issue in enumerate(issuelist):
-            # values of issue in given bid
-            value = pref[issue][bid[issueindex]]
-            # weight of issue in given bid
-            weight = pref[issue]['weight']
-            util += weight * value
-        return util
+    return agent_count_mapping
 
-    # Utility change to discrete move type
-    def delta_mapping(delta_util):
-        if (abs(delta_util[0]) <= bound and abs(delta_util[1]) <= bound):
-            return 'silent'
-        if (abs(delta_util[0]) <= bound and delta_util[1]) > bound:
-            return 'nice'
-        if (delta_util[0] <= 0 and delta_util[1] <= 0):
-            return 'unfortunate'
-        if (delta_util[0] > 0 and delta_util[1] <= 0):
-            return 'selfish'
-        if (delta_util[0] > 0 and delta_util[1] > 0):
-            return 'fortunate'
-        if (delta_util[0] <= 0 and delta_util[1] > 0):
-            return 'concession'
-        print(delta_util)
 
-    # List of bids to list of discrete moves
-    def discritized_mapping(agent_bids):
-        mapped_utils_discrete = []
-        prev_utils = agent_bids[0]
-        for new_utils in agent_bids[1:]:
-            delta_util1 = new_utils[0] - prev_utils[0]
-            delta_util2 = new_utils[1] - prev_utils[1]
-            delta_util = (delta_util1, delta_util2)
-            mapped_utils_discrete.append(delta_mapping(delta_util))
-            prev_utils = new_utils
-        return mapped_utils_discrete
+def get_sensor_model(training_dir, possible_moves, silent_bound=0.01, combined=False):
+    agent_count_mapping = get_bids(training_dir, silent_bound, combined)
 
-    def retrieve_all_agents_bids(train):
-        # Useful structures
-        all_issues = train['issues']
-        pref1 = train['Utility1']
-        pref2 = train['Utility2']
-        all_bids = train['bids']
+    if combined:
+        dummy = possible_moves[:]
+        possible_moves = []
 
-        mapped_utils_a1 = []
-        mapped_utils_a2 = []
+        for m1 in dummy:
+            for m2 in dummy:
+                possible_moves.append(m1 + m2)
 
-        # Parse utility values of bids
-        for bid in all_bids:
-            r = bid['round']
-            #         print(bid)
-            # stop if the negotiation session has ended
-            if 'agent1' in bid:
-                bid_agent1 = bid['agent1'].split(',')
-                u1_b1 = get_utility(bid_agent1, pref1)
-                u2_b1 = get_utility(bid_agent1, pref2)
-                # Save the bid -> utility mapping
-                mapped_utils_a1.append([u1_b1, u2_b1, int(r)])
-            if 'agent2' in bid:
-                bid_agent2 = bid['agent2'].split(',')
-                u1_b2 = get_utility(bid_agent2, pref1)
-                u2_b2 = get_utility(bid_agent2, pref2)
-                mapped_utils_a2.append([u2_b2, u1_b2, int(r)])
+    # Start constructing the model.
+    sensor_model = {}
+    for k, v in agent_count_mapping.items():
+        cnt_bids = Counter(v)
+        total = len(v)
+        for key in cnt_bids:
+            cnt_bids[key] /= total
+        sensor_model[k] = dict(cnt_bids)
 
-        agent1_bids = [mapped_utils_a1[i][0:2] for i in range(len(mapped_utils_a1))]
-        agent2_bids = [mapped_utils_a2[i][0:2] for i in range(len(mapped_utils_a2))]
+    for k, moves in sensor_model.items():
+        for pm in possible_moves:
+            if pm not in moves:
+                moves[pm] = 0.0
+        sensor_model[k] = np.array(list(dict(OrderedDict(sorted(moves.items()))).values()))
 
-        # Discritize bidspace
-        agent1_bids_discrete = discritized_mapping(agent1_bids)
-        agent2_bids_discrete = discritized_mapping(agent2_bids)
+    evidence_index = {k: v for v, k in enumerate(sorted(possible_moves))}
+    state_index = {k: v for v, k in enumerate(list(sensor_model.keys()))}
+    sensor_model = np.array(list(sensor_model.values()))
 
-        return (agent1_bids_discrete, agent2_bids_discrete)
+    return sensor_model, state_index, evidence_index
+
+
+def get_transition_model(states):
+    return np.identity(len(states))
+
+
+def predict(training_dir, sensor_model, transition_model, state_index, evidence_index, combined=False):
+    train_files = os.listdir(training_dir)
+    labels_keys = list(state_index.keys())
+
+    labels = []
+    preds = []
+
+    for t in train_files:
+        train = json.load(open(os.path.join(training_dir, t)))
+        a1_name, a2_name = re.split(r'[^A-Za-z]+', t.strip('.json'))[0:2]
+        a1_bids, a2_bids = retrieve_all_agents_bids(train)
+        labels.append(a1_name)
+        labels.append(a2_name)
+
+        if combined:
+            a1_com = [a1_bids[i] + a2_bids[i] for i in range(min(len(a1_bids), len(a2_bids)))]
+            a2_com = [a2_bids[i] + a1_bids[i] for i in range(min(len(a1_bids), len(a2_bids)))]
+        else:
+            a1_com = a1_bids
+            a2_com = a2_bids
+
+        p1 = filter(a1_com, sensor_model, transition_model, evidence_index)
+        p2 = filter(a2_com, sensor_model, transition_model, evidence_index)
+
+        preds.append(labels_keys[np.argmax(p1)])
+        preds.append(labels_keys[np.argmax(p2)])
+
+        print(f'P1 (predicted, true): ({labels_keys[np.argmax(p1)]}, {a1_name}) --- '
+              f'P2 (predicted, true): ({labels_keys[np.argmax(p2)]}, {a2_name})')
+
+    c = [labels[x] == preds[x] for x in range(len(labels))]
+    print(f'\nOverall accuracy: {sum(c) / float(len(labels))}\n\n')
+
+
+def filter(bids, sensor_model, transition_model, evidence_index):
+    Bt = np.ones(4) * 0.25
+
+    for t, bt in enumerate(bids):
+        sm1 = sensor_model[:, evidence_index[bt]]
+        stm1 = np.dot(transition_model, Bt)
+        Bt = np.multiply(sm1, stm1)
+        Bt = Bt / sum(Bt)
+
+    return Bt
