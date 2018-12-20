@@ -36,6 +36,3 @@ partyrepository.xml
 protocolrepository.xml
 Genius/
 *.xml
-
-# Python stuff
-.ipynb_checkpoints/
