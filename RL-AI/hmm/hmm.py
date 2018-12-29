@@ -29,7 +29,7 @@ def get_utility(bid, pref):
 def delta_mapping(delta_util, silent_bound=0.01):
     if (abs(delta_util[0]) <= silent_bound and abs(delta_util[1]) <= silent_bound):
         return 'silent'
-    if (abs(delta_util[0]) <= silent_bound and delta_util[1]) > silent_bound:
+    if (abs(delta_util[0]) <= silent_bound and delta_util[1] > silent_bound):
         return 'nice'
     if (delta_util[0] <= 0 and delta_util[1] <= 0):
         return 'unfortunate'
@@ -155,7 +155,8 @@ def get_transition_model(states):
     return np.identity(len(states))
 
 
-def predict(training_dir, sensor_model, transition_model, state_index, evidence_index, combined=False):
+def predict(training_dir, sensor_model, transition_model, state_index, evidence_index, silent_bound=0.01,
+            combined=False):
     train_files = os.listdir(training_dir)
     labels_keys = list(state_index.keys())
 
@@ -165,7 +166,7 @@ def predict(training_dir, sensor_model, transition_model, state_index, evidence_
     for t in train_files:
         train = json.load(open(os.path.join(training_dir, t)))
         a1_name, a2_name = re.split(r'[^A-Za-z]+', t.strip('.json'))[0:2]
-        a1_bids, a2_bids = retrieve_all_agents_bids(train)
+        a1_bids, a2_bids = retrieve_all_agents_bids(train, silent_bound)
         labels.append(a1_name)
         labels.append(a2_name)
 
